@@ -1,0 +1,12 @@
+version: 2
+
+# Sources pour DuckDB
+sources:
+  - name: main
+    tables:
+      - name: name_of_table
+
+# Sources pour PostgreSQL
+  - name: public
+    tables:
+      - name: name_of_table
