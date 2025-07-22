@@ -334,7 +334,7 @@ class ColumnsManagement(StandardizeColnames):
                     elif self.type_mapping[col_type] == "bool":
                         self.df[col_name] = self.df[col_name].replace({None: False, "": False, pd.NA: False}).astype(bool)
                     elif self.type_mapping[col_type] == "datetime64":
-                        self.df[col_name] = pd.to_datetime(df[col_name], format="%d-%m-%Y", errors="coerce")
+                        self.df[col_name] = pd.to_datetime(self.df[col_name], format="%d-%m-%Y", errors="coerce")
                     elif self.type_mapping[col_type] == "string":
                         self.df[col_name] = self.df[col_name].astype(self.type_mapping[col_type])
                         if not pd.isna(col_length):
