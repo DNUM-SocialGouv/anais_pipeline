@@ -8,6 +8,6 @@
 /Staging/dbtStaging/target/
 /Staging/dbtInspectionControle/target/
 /Staging/dbtCertDC/target/
-/data/
+/data/** */
 /Staging/dbtInspectionControlePA/
 /Staging/**/logs/
