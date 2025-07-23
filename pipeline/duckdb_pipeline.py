@@ -236,7 +236,8 @@ class DuckDBPipeline(DataBasePipeline):
         pd.DataFrame
             Dataframe de la table chargée.
         """
-        return conn.execute(f"SELECT * FROM {table_name}").df()
+        df = conn.execute(f"SELECT * FROM {table_name}").df()
+        return df
 
     def close(self):
         """ Ferme la connexion à la base de données Duckdb. """

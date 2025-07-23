@@ -233,7 +233,6 @@ class PostgreSQLLoader(DataBasePipeline):
                 return
 
             schema_df = self.get_postgres_schema(conn, table_name)
-
             # Chargement du csv et datamanagement
             pipeline = ColumnsManagement(csv_file=csv_file, schema_df=schema_df, logger=self.logger)
             df = pipeline.df

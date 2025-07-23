@@ -178,7 +178,8 @@ class DataBasePipeline:
         conn = self.conn
         for table_name, csv_name in views_to_import.items():
             if table_name:
-                TableInCsv.import_to_csv(conn, table_name, csv_name, self.fetch_df, self.csv_folder_input, self.logger)
+                transfo = TableInCsv(conn, table_name, csv_name, self.fetch_df, self.csv_folder_input, self.logger)
+                transfo.import_to_csv()
             else:
                 self.logger.warning("⚠️ Aucune table spécifiée")
 
@@ -196,7 +197,8 @@ class DataBasePipeline:
         conn = self.conn
         for table_name, csv_name in views_to_export.items():
             if table_name:
-                TableInCsv.export_to_csv(conn, table_name, csv_name, self.fetch_df, self.csv_folder_output, self.logger, date=date)
+                transfo = TableInCsv(conn, table_name, csv_name, self.fetch_df, self.csv_folder_output, self.logger)
+                transfo.export_to_csv(date=date)
             else:
                 self.logger.warning("⚠️ Aucune table spécifiée")
 

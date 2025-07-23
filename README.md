@@ -1,5 +1,5 @@
-# anais_staging
-Pipeline de l'étape de staging de la plateforme ANAIS
+# anais_Nom_projet
+Pipeline de l'étape de Nom_projet de la plateforme ANAIS ou en local
 
 # Installation & Lancement du projet DBT
 
@@ -41,8 +41,8 @@ Il doit se trouver dans le répertoire suivant :
 
 ### Où placer le fichier ?
 
-Il doit être placé dans à la racine du projet Anais_staging (au même niveau que le README et pyproject.toml) :
-- **VM Cegedim** : `~/anais_staging/profiles.yml`
+Il doit être placé dans à la racine du projet Nom_projet (au même niveau que le README et pyproject.toml) :
+- **VM Cegedim** : `~/Nom_projet/profiles.yml`
 - **Local** : `C:\Users\<VotreNom>\...\<projet>\profiles.yml`
  
 Le fichier `profiles.yml` est disponible à la racine du repo.  
@@ -69,18 +69,18 @@ Chaque projet à sa section.
 ### Section directory
 
 Contient les informations relatives aux fichiers et répertoires du projet.
-- input_directory = répertoire où sont trouvables les fichiers csv en entrée. Exemple: "input/<Nom_projet>"
-- view_directory = répertoire dans lequel sont enregistrés les modèles dbt du projet. <Nom_projet>" trouvable dans '/anais_staging/Staging/dbtStaging/models/'
-- output_directory = répertoire où sont enregistrés les fichiers csv en sortie. Exemple: "output/<Nom_projet>"
-- output_sql_directory = répertoire où sont enregistrés les fichiers SQL Create table. Exemple: 'Staging/output_sql/<Nom_projet>'
-- output_sql_staging_directory = répertoire où sont enregistrés les fichiers SQL Create table de Staging. Permet la création des tables de Staging dans la base du projet. Exemple: 'Staging/output_sql/staging'
-- remote_directory_output = listes des répertoires sur le SFTP où sont enregistrés les fichiers csv en sortie. Exemple: "/SCN_BDD/<Nom_projet>/output"
+- local_directory_input = répertoire où sont trouvables les fichiers csv en entrée. Exemple: "input/Nom_projet"
+- local_directory_output = répertoire où sont enregistrés les fichiers csv en sortie. Exemple: "output/Nom_projet"
+- models_directory = répertoire dans lequel sont enregistrés les modèles dbt du projet. dbt_Nom_projet" trouvable dans '/anais_Nom_projet/dbt_Nom_projet/models/'
+- create_table_directory = répertoire où sont enregistrés les fichiers SQL Create table. Exemple: 'output_sql/'
+- remote_directory_input = listes des répertoires sur le SFTP où sont enregistrés les fichiers csv en entrée (pour la recette). Exemple: "/SCN_BDD/Nom_projet/input"
+- remote_directory_output = listes des répertoires sur le SFTP où sont enregistrés les fichiers csv en sortie. Exemple: "/SCN_BDD/Nom_projet/output"
 
 
-### Section **files_to_download**
+### Section **input_to_download**
 
 Contient les informations relatives aux fichiers csv provenant du SFTP.
-La section `files_to_download` (fichier à récupérer) contient :
+La section `input_to_download` (fichier à récupérer) contient :
 - path = Chemin du fichier sur le SFTP. Exemple : "/SCN_BDD/INSERN"
 - keyword = Terme dans le nom du fichier qui permet de le distinguer des autres fichiers. Exemple : "DNUM_TdB_CertDc" pour un fichier nommer DNUM_TdB_CertDcT42024T12025.csv
 - file = Nom d'enregistrement du fichier une fois importé. Exemple : "sa_insern.csv"
@@ -100,22 +100,22 @@ Exemple: ods_insee: ods_insee
 L'ensemble de la Pipeline est exécuté depuis le `main.py`.
 
 ### Pour l'exécution de la pipeline:
-1. Placer vous dans le bon répertoire `anais_staging`
+1. Placer vous dans le bon répertoire `anais_Nom_projet`
 
 ```bash
-# Placer vous dans anais_staging
-cd anais_staging
+# Placer vous dans anais_Nom_projet
+cd anais_Nom_projet
 ```
 
 2. Lancer le `main.py`
 ```bash
-uv run Staging/main.py --env "local" --profile "CertDC"
+uv run main.py --env "local" --profile "Nom_projet"
 ```
 Avec env = 'local' ou 'anais' selon votre environnement de travail
-et profile = 'Staging', 'Helios', 'Matrice', 'InspectionControlePA' ou 'CertDC' selon le projet que vous souhaitez lancer
+et profile = 'Nom_projet'
 
 ### Pipeline sur env 'local':
-1. Récupération des fichiers d'input. Ces fichiers sont placés manuellement dans le dossier `input/` sous format **.csv** (les délimiteurs sont gérés automatiquement)
+1. Récupération des fichiers d'input. !! Les fichiers doivent être placés manuellement dans le dossier `input/` sous format **.csv** !! (les délimiteurs sont gérés automatiquement)
 2. Création de la base DuckDB si inexistante.
 3. Connexion à la base DuckDB
 4. Création des tables si inexistantes
@@ -190,7 +190,7 @@ et profile = 'Staging', 'Helios', 'Matrice', 'InspectionControlePA' ou 'CertDC' 
 ```
 
 ## 6. Utilités des fichiers
-### ./Staging/dbtStaging/
+### ./dbtCertDC/
 Répertoire de fonctionnement des modèles DBT -> création de vue SQL.
 
 dbt_project.yml : Fichier de configuration de DBT (obligatoire)
@@ -199,7 +199,7 @@ macros/ : Répertoire de stockage des macro jinja
 
 models/ : Répertoire de stockage des modèles dbt
 
-### ./Staging/pipeline/
+### ./pipeline/
 Répertoire d'orchestration de la pipeline Python.
 
 .env : Fichier secret contenant le paramétrage vers le SFTP et les mots de passes des bases de données postgres.
@@ -219,10 +219,10 @@ metadata.yml : Contient les informations relatives aux fichiers .csv provenant d
 load_yml.py : Lit un fichier .yml
 
 
-./Staging/main.py : Programme d'exécution de la pipeline
+./main.py : Programme d'exécution de la pipeline
 
 
-./Staging/output_sql/ : Répertoire qui contient les fichiers .sql de création de table (CREATE TABLE)
+./output_sql/ : Répertoire qui contient les fichiers .sql de création de table (CREATE TABLE)
 
 
 ./logs/ : Répertoire de la log

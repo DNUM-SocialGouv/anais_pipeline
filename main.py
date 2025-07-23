@@ -16,7 +16,7 @@ from pipeline.pipeline_orchestration import (anais_staging_pipeline,
 today = date.strftime(date.today(), "%Y_%m_%d")
 load_dotenv()
 
-CHOICES = ["Staging", "Helios", "InspectionControlePA", "Matrice_PA", "Matrice_PH", "CertDC"]
+CHOICES = ["Nom_projet"]
 
 
 # === Fonction ===
@@ -56,7 +56,7 @@ def main(env: Literal["local", "anais"], profile: str, profile_yml: str  = "prof
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Exécution du pipeline")
     parser.add_argument("--env", choices=["local", "anais"], default="local", help="Environnement d'exécution")
-    parser.add_argument("--profile", choices=CHOICES, default="Staging", help="Profile dbt d'exécution")
+    parser.add_argument("--profile", choices=CHOICES, default="Nom_Projet", help="Profile dbt d'exécution")
     args = parser.parse_args()
 
     main(args.env, args.profile)
