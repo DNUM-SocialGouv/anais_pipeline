@@ -39,7 +39,8 @@ def run_dbt(profile: str, target: Literal["local", "anais"], project_dir: str, p
              "--project-dir", project_path,
              "--profiles-dir", profiles_path,
              "--profile", profile,
-             "--target", target
+             "--target", target,
+             "--select", f"+{project_dir}"
              ],
             capture_output=True,
             text=True,
