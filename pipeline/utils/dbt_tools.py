@@ -65,7 +65,7 @@ def run_dbt(profile: str, target: Literal["local", "anais"], project_dir: str, p
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Exécution du pipeline")
     parser.add_argument("--env", choices=["local", "anais"], default="local", help="Environnement d'exécution")
-    parser.add_argument("--profile", choices=CHOICES, default="Helios", help="Profile dbt d'exécution")
+    parser.add_argument("--profile", help="Profile dbt d'exécution")
     args = parser.parse_args()
 
     metadata_yml = "metadata.yml"

@@ -7,7 +7,7 @@
 *__pycache__
 /Staging/dbtStaging/target/
 /Staging/dbtInspectionControle/target/
-/Nom_projet/target/
+**/target/
 /data/
 /Staging/dbtInspectionControlePA/
 /Staging/**/logs/
