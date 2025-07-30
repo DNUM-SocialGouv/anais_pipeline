@@ -68,10 +68,12 @@ if __name__ == "__main__":
     parser.add_argument("--env", choices=["local", "anais"], default="local", help="Environnement d'exécution")
     parser.add_argument("--profile", help="Profile dbt d'exécution")
     args = parser.parse_args()
+    env = args.env
+    profile = args.profile
 
     logger = setup_logger(env, f"logs/log_{env}.log")
 
     metadata_yml = "metadata.yml"
-    config = load_metadata_YAML(metadata_yml, args.profile, logger, "../..")
+    config = load_metadata_YAML(metadata_yml, profile, logger, "../..")
 
-    run_dbt(args.profile, args.env, config["models_directory"], "../..", logger)
+    run_dbt(profile, env, config["models_directory"], "../..", logger)
