@@ -6,7 +6,7 @@ import re
 from logging import Logger
 
 # === Modules ===
-from pipeline.csv_management import TableInCsv
+from pipeline.utils.csv_management import TableInCsv
 
 
 # === Classes ===

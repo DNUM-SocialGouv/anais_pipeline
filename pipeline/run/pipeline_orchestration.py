@@ -6,9 +6,9 @@ from typing import Literal
 from logging import Logger
 
 # === Modules ===
-from pipeline.duckdb_pipeline import DuckDBPipeline
-from pipeline.sftp_sync import SFTPSync
-from pipeline.postgres_loader import PostgreSQLLoader
+from pipeline.utils.sftp_sync import SFTPSync
+from pipeline.database_management.duckdb_pipeline import DuckDBPipeline
+from pipeline.database_management.postgres_loader import PostgreSQLLoader
 
 
 # === Fonctions ===

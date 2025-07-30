@@ -1,4 +1,0 @@
-packages:
-  - git: "https://github.com/DNUM-SocialGouv/anais_staging.git"
-    revision: "staging_package"
-  # - local: ../../Staging/dbtStaging

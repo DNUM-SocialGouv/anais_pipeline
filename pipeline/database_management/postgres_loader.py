@@ -7,9 +7,9 @@ import urllib.parse
 from logging import Logger
 
 # === Modules ===
-from pipeline.csv_management import ColumnsManagement
-from pipeline.database_pipeline import DataBasePipeline
-from pipeline.load_yml import resolve_env_var
+from pipeline.utils.csv_management import ColumnsManagement
+from pipeline.database_management.database_pipeline import DataBasePipeline
+from pipeline.utils.load_yml import resolve_env_var
 
 # === Chargement des variables d’environnement ===
 load_dotenv()

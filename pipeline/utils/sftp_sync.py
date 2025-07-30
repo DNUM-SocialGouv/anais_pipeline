@@ -7,7 +7,7 @@ from typing import Optional, List, Dict
 from logging import Logger
 
 # === Modules ===
-from pipeline.csv_management import TransformExcel
+from pipeline.utils.csv_management import TransformExcel
 
 # === Classes ===
 # Classe SFTPSync

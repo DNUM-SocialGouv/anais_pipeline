@@ -1,5 +1,5 @@
-# anais_Nom_projet
-Pipeline de l'étape de Nom_projet de la plateforme ANAIS ou en local
+# Package Anais pipeline
+Package de la pipeline d'exécution d'Anais
 
 # Installation & Lancement du projet DBT
 
@@ -7,7 +7,7 @@ Cette section décrit les étapes nécessaires pour installer les dépendances, 
 
 ---
 
-## 1. Installation des dépendances via UV
+## 1. Installation du package
 
 Le projet utilise [UV] pour la gestion des dépendances Python.  
 Voici les étapes à suivre pour initialiser l’environnement :
@@ -21,81 +21,20 @@ cd chemin/vers/le/projet
 uv --version
 pip install uv # Si pas installé
 
-# 3. Installer les dépendances
-uv sync
+# 3. Installer le package
+uv uv pip install "git+https://github.com/ton-org/mon-package-pipeline.git@main"
 ```
 
 ---
 
-## 2. ⚙️ Configuration du fichier `profiles.yml`
+## 2. Fichiers requits en complément du package
 
-DBT nécessite un fichier de configuration appelé `profiles.yml`, qui contient les informations de connexion à la base de données.
-
-### Où se trouve le fichier ?
-
-Il doit se trouver dans le répertoire suivant :
-- **Linux/macOS** : `~/.dbt/profiles.yml`
-- **Windows** : `C:\Users\<VotreNom>\.dbt\profiles.yml`
-
-> Si le dossier `.dbt` n’existe pas encore, vous pouvez le créer manuellement.  
-
-### Où placer le fichier ?
-
-Il doit être placé dans à la racine du projet Nom_projet (au même niveau que le README et pyproject.toml) :
-- **VM Cegedim** : `~/Nom_projet/profiles.yml`
-- **Local** : `C:\Users\<VotreNom>\...\<projet>\profiles.yml`
- 
-Le fichier `profiles.yml` est disponible à la racine du repo.  
-
-
-### Que contient le fichier ?
-
-Il contient les informations relatives aux bases de données des différents projets :
-- Staging (DuckDB et postegres)
-- Helios (DuckDB et postegres)
-- Matrice (DuckDB et postegres)
-- InspectionControlePA (DuckDB et postegres)
-- CertDC (DuckDB et postegres)
-
-Seul le password des bases postgres n'est pas indiqué -> il est indiqué dans le `.env`
+#### - Fichier `metadata.yml`, contentant les paramètres relatifs au projet utilisé (configuration présenté dans anais_staging -> main)
+#### - Fichier `.env`, contenant les paramètres d'authentification au serveur SFTP et les mots de passe des databases (configuration présenté dans anais_staging -> main)
 
 ---
-## 3. ⚙️ Configuration du fichier `metadata.yml`
 
-Le fichier `metadata.yml` contient le paramétrage relatif aux fichiers en entrée et en sortie pour les différents projets.
-
-Chaque projet à sa section.
-
-### Section directory
-
-Contient les informations relatives aux fichiers et répertoires du projet.
-- local_directory_input = répertoire où sont trouvables les fichiers csv en entrée. Exemple: "input/Nom_projet"
-- local_directory_output = répertoire où sont enregistrés les fichiers csv en sortie. Exemple: "output/Nom_projet"
-- models_directory = répertoire dans lequel sont enregistrés les modèles dbt du projet. dbt_Nom_projet" trouvable dans '/anais_Nom_projet/dbt_Nom_projet/models/'
-- create_table_directory = répertoire où sont enregistrés les fichiers SQL Create table. Exemple: 'output_sql/'
-- remote_directory_input = listes des répertoires sur le SFTP où sont enregistrés les fichiers csv en entrée (pour la recette). Exemple: "/SCN_BDD/Nom_projet/input"
-- remote_directory_output = listes des répertoires sur le SFTP où sont enregistrés les fichiers csv en sortie. Exemple: "/SCN_BDD/Nom_projet/output"
-
-
-### Section **input_to_download**
-
-Contient les informations relatives aux fichiers csv provenant du SFTP.
-La section `input_to_download` (fichier à récupérer) contient :
-- path = Chemin du fichier sur le SFTP. Exemple : "/SCN_BDD/INSERN"
-- keyword = Terme dans le nom du fichier qui permet de le distinguer des autres fichiers. Exemple : "DNUM_TdB_CertDc" pour un fichier nommer DNUM_TdB_CertDcT42024T12025.csv
-- file = Nom d'enregistrement du fichier une fois importé. Exemple : "sa_insern.csv"
-
-### Section **files_to_upload**
-
-Contient les informations relatives aux vues à exporter en csv.
-La section `files_to_upload` à envoyer contient :
-- nom de la vue sql (nom du modèle dbt)
-- radical du nom donné au fichier csv exporté. Le nom final sera '<radical>_<date_du_jour>.csv'. 
-Exemple: ods_insee: ods_insee
-
-
----
-## 4. Lancement du pipeline :
+## 3. Lancement du pipeline :
 
 L'ensemble de la Pipeline est exécuté depuis le `main.py`.
 
@@ -114,6 +53,7 @@ uv run main.py --env "local" --profile "Nom_projet"
 Avec env = 'local' ou 'anais' selon votre environnement de travail
 et profile = 'Nom_projet'
 
+## 4. Fonctionnement de la pipeline
 ### Pipeline sur env 'local':
 1. Récupération des fichiers d'input. !! Les fichiers doivent être placés manuellement dans le dossier `input/` sous format **.csv** !! (les délimiteurs sont gérés automatiquement)
 2. Création de la base DuckDB si inexistante.
@@ -138,8 +78,7 @@ et profile = 'Nom_projet'
 10. Export des **.csv** en output vers le SFTP
 
 
-## 5. Architecture du projet
-# MonProjet
+## 5. Architecture du package
 
 ## 🏗️ Architecture du projet
 
