@@ -423,6 +423,7 @@ class TableInCsv:
         output_path = os.path.join(output_folder, file_name)
         self.logger.info(f"📤 Export de '{self.table_name}' → {output_path}")
 
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
         try:
             # Exportation
             df = self.df_fetch_func(self.conn, self.table_name)

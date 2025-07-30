@@ -1,4 +1,5 @@
 # === Packages ===
+import os
 from pathlib import Path
 import subprocess
 from typing import Literal
@@ -32,6 +33,13 @@ def run_dbt(profile: str, target: Literal["local", "anais"], project_dir: str, p
     try:
         project_path = str(Path(project_dir).resolve())
         profiles_path = str(Path(profiles_dir).resolve())
+
+        if not os.path.exists(os.path.join(project_path, "package-lock.yml")):
+            dbt_deps = subprocess.run(
+                ["dbt",
+                "deps",
+                "--project-dir", project_path
+                ])
 
         result = subprocess.run(
             ["dbt",
