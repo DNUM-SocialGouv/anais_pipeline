@@ -64,7 +64,7 @@ def run_dbt(profile: str, target: Literal["local", "anais"], project_dir: str, p
         logger.error(e.stdout)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Exécution du pipeline")
+    parser = argparse.ArgumentParser(description="Exécution du pipeline : exécution du dbt run")
     parser.add_argument("--env", choices=["local", "anais"], default="local", help="Environnement d'exécution")
     parser.add_argument("--profile", help="Profile dbt d'exécution")
     args = parser.parse_args()

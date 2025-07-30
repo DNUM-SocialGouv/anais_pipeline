@@ -198,3 +198,20 @@ class SFTPSync:
         self.sftp.close()
         self.transport.close()
         self.logger.info("Connexion SFTP fermée.")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Exécution du pipeline : download des fichiers SFTP")
+    parser.add_argument("--env", choices=["local", "anais"], default="local", help="Environnement d'exécution")
+    parser.add_argument("--profile", help="Profile dbt d'exécution")
+    args = parser.parse_args()
+    env = args.env
+    profile = args.profile
+
+    logger = setup_logger(env, f"logs/log_{env}.log")
+
+    metadata_yml = "metadata.yml"
+    config = load_metadata_YAML(metadata_yml, profile, logger, ".")
+
+    sftp = SFTPSync(config["local_directory_input"], logger)
+    sftp.download_all(config["files_to_download"])
