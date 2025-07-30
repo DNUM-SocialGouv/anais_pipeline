@@ -74,6 +74,6 @@ if __name__ == "__main__":
     logger = setup_logger(env, f"logs/log_{env}.log")
 
     metadata_yml = "metadata.yml"
-    config = load_metadata_YAML(metadata_yml, profile, logger, "../..")
+    config = load_metadata_YAML(metadata_yml, profile, logger, ".")
 
-    run_dbt(profile, env, config["models_directory"], "../..", logger)
+    run_dbt(profile, env, config["models_directory"], ".", logger)
