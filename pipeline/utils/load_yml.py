@@ -36,6 +36,7 @@ def load_YAML(file_name: str, config_file_dir: str, logger: Logger) -> dict:
     """
     if config_file_dir:
         path = os.path.join(config_file_dir, file_name)
+        print(path)
     else:
         current_dir = Path(__file__).resolve().parent
         path = current_dir.parent / "pipeline" / file_name
