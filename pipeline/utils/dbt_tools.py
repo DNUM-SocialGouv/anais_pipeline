@@ -8,6 +8,7 @@ import argparse
 
 # === Modules ===
 from pipeline.utils.load_yml import load_metadata_YAML
+from pipeline.utils.logging_management import setup_logger
 
 # === Fonctions ===
 def dbt_deps(project_path: str):
@@ -67,6 +68,8 @@ if __name__ == "__main__":
     parser.add_argument("--env", choices=["local", "anais"], default="local", help="Environnement d'exécution")
     parser.add_argument("--profile", help="Profile dbt d'exécution")
     args = parser.parse_args()
+
+    logger = setup_logger(env, f"logs/log_{env}.log")
 
     metadata_yml = "metadata.yml"
     config = load_metadata_YAML(metadata_yml, args.profile, logger, "../..")
