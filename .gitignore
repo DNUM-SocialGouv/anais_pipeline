@@ -11,3 +11,4 @@
 /data/
 /Staging/dbtInspectionControlePA/
 /Staging/**/logs/
+**/package-lock.yml
