@@ -16,7 +16,7 @@ def dbt_deps(project_path: str):
          "--project-dir", project_path
         ])
 
-def run_dbt(profile: str, target: Literal["local", "anais"], project_dir: str, profiles_dir: str, logger: Logger):
+def run_dbt(profile: str, target: Literal["local", "anais"], project_dir: str, profiles_dir: str, logger: Logger, install_deps: bool = True):
     """
     Fonction exécutant la commande 'dbt run' avec les différentes options.
     Exécute obligatoirement le répertoire 'base' dans les modèles dbt, ainsi que le répertoire choisi.
@@ -38,7 +38,7 @@ def run_dbt(profile: str, target: Literal["local", "anais"], project_dir: str, p
         project_path = str(Path(project_dir).resolve())
         profiles_path = str(Path(profiles_dir).resolve())
 
-        if not os.path.exists(os.path.join(project_path, "package-lock.yml")):
+        if not os.path.exists(os.path.join(project_path, "package-lock.yml")) and install_deps:
             dbt_deps_install = dbt_deps(project_path)
 
         result = subprocess.run(
