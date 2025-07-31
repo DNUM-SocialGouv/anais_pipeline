@@ -109,27 +109,29 @@ def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_
         Fichier de log.
     """
     # --- Staging ---
-    # Initialisation de la config postgres
-    pg_staging_loader = PostgreSQLLoader(
-        db_config=staging_db_config,
-        config=config,
-        logger=logger)
+    # # Initialisation de la config postgres
+    # pg_staging_loader = PostgreSQLLoader(
+    #     db_config=staging_db_config,
+    #     config=config,
+    #     logger=logger)
 
-    # Récupération des tables provenant de Staging
-    pg_staging_loader.connect()
-    pg_staging_loader.import_csv(config["input_to_download"])
-    pg_staging_loader.close()
+    # # Récupération des tables provenant de Staging
+    # pg_staging_loader.connect()
+    # pg_staging_loader.import_csv(config["input_to_download"])
+    # pg_staging_loader.close()
 
     # --- Projet ---
     # Initialisation de la config postgres
     pg_loader = PostgreSQLLoader(
         db_config=db_config,
         config=config,
-        logger=logger)
+        logger=logger
+        staging_db_config=staging_db_config)
 
-    # Remplissage des tables de la base postgres
+    # # Remplissage des tables de la base postgres
     pg_loader.connect()
-    pg_loader.run()
+    # pg_loader.run()
+    pg_loader.copy_table(config["input_to_download"])
 
     # Création des vues et export
     run_dbt(profile, "anais", config["models_directory"], ".", logger)
