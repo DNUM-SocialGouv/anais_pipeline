@@ -125,7 +125,7 @@ def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_
     pg_loader = PostgreSQLLoader(
         db_config=db_config,
         config=config,
-        logger=logger
+        logger=logger,
         staging_db_config=staging_db_config)
 
     # # Remplissage des tables de la base postgres
