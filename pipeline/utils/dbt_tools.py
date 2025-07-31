@@ -4,11 +4,9 @@ from pathlib import Path
 import subprocess
 from typing import Literal
 from logging import Logger
-import argparse
 
 # === Modules ===
-from pipeline.utils.load_yml import load_metadata_YAML
-from pipeline.utils.logging_management import setup_logger
+from pipeline.utils.config import env_var, setup_config
 
 # === Fonctions ===
 def dbt_deps(project_path: str):
@@ -64,16 +62,7 @@ def run_dbt(profile: str, target: Literal["local", "anais"], project_dir: str, p
         logger.error(e.stdout)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Exécution du pipeline : exécution du dbt run")
-    parser.add_argument("--env", choices=["local", "anais"], default="local", help="Environnement d'exécution")
-    parser.add_argument("--profile", help="Profile dbt d'exécution")
-    args = parser.parse_args()
-    env = args.env
-    profile = args.profile
+    config_var = env_var() 
+    config_var = setup_config(config_var)
 
-    logger = setup_logger(env, f"logs/log_{env}.log")
-
-    metadata_yml = "metadata.yml"
-    config = load_metadata_YAML(metadata_yml, profile, logger, ".")
-
-    run_dbt(profile, env, config["models_directory"], ".", logger)
+    run_dbt(config_var["profile"], config_var["env"], config_var["config"]["models_directory"], ".", config_var["logger"])

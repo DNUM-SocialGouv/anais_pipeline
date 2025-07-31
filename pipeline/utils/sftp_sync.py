@@ -5,12 +5,10 @@ import datetime
 from dotenv import load_dotenv
 from typing import Optional, List, Dict
 from logging import Logger
-import argparse
 
 # === Modules ===
 from pipeline.utils.csv_management import TransformExcel
-from pipeline.utils.load_yml import load_metadata_YAML
-from pipeline.utils.logging_management import setup_logger
+from pipeline.utils.config import env_var, setup_config
 
 # === Classes ===
 # Classe SFTPSync
@@ -204,17 +202,8 @@ class SFTPSync:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Exécution du pipeline : download des fichiers SFTP")
-    parser.add_argument("--env", choices=["local", "anais"], default="local", help="Environnement d'exécution")
-    parser.add_argument("--profile", help="Profile dbt d'exécution")
-    args = parser.parse_args()
-    env = args.env
-    profile = args.profile
+    config_var = env_var() 
+    config_var = setup_config(config_var)
 
-    logger = setup_logger(env, f"logs/log_{env}.log")
-
-    metadata_yml = "metadata.yml"
-    config = load_metadata_YAML(metadata_yml, profile, logger, ".")
-
-    sftp = SFTPSync(config["local_directory_input"], logger)
-    sftp.download_all(config["files_to_download"])
+    sftp = SFTPSync(config_var["config"]["local_directory_input"], config_var["logger"])
+    sftp.download_all(config_var["config"]["files_to_download"])
