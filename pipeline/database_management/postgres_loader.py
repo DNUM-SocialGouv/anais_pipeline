@@ -18,7 +18,7 @@ load_dotenv()
 # === Classes ===
 # Classe PostgreSQLLoader qui gère les actions relatives à une database postgres
 class PostgreSQLLoader(DataBasePipeline):
-    def __init__(self, db_config: dict, config: dict, logger: Logger):
+    def __init__(self, db_config: dict, config: dict, logger: Logger, staging_db_config: dict):
         """
         Initialisation de la base Postgres. Classe héritière de DataBasePipeline.
 
@@ -30,22 +30,26 @@ class PostgreSQLLoader(DataBasePipeline):
             Metadata du profile (dans metadata.yml).
         logger : logging.Logger
             Fichier de log.
+        staging_db_config : dict
+            Paramètres de connexion vers la base Staging, None by default.
         """
-        super().__init__(db_config, config, logger)
+        super().__init__(db_config, config, logger, staging_db_config)
         self.logger = logger
         self.typedb = "postgres"
-        self.host = db_config["host"]
-        self.port = db_config["port"]
-        self.user = db_config["user"]
-        self.password = urllib.parse.quote(resolve_env_var(db_config["password"]))
-        self.database = db_config["dbname"]
         self.schema = db_config["schema"]
-        self.engine = self.init_engine()
+        self.db_name = db_config["dbname"]
+        self.engine = self.init_engine(
+            db_config["user"],
+            urllib.parse.quote(resolve_env_var(db_config["password"])),
+            db_config["host"],
+            db_config["port"],
+            self.db_name
+            )
 
-    def init_engine(self):
+    def init_engine(self, user: str, password: str, host: str, port: str, database: str):
         """ Initialisation de la connexion postgres. """
         try:
-            url = f"postgresql+psycopg2://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
+            url = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}"
             engine = create_engine(url)
             self.logger.info("Connexion PostgreSQL établie avec succès.")
             return engine
@@ -282,6 +286,37 @@ class PostgreSQLLoader(DataBasePipeline):
         """
         conn.execute(text(f"SET search_path TO {self.schema}"))
         return pd.read_sql_table(table_name, conn)
+
+    def copy_table_from_staging(self, staging_table_name: str, db_table_name: str):
+        """
+        Copie d'une table de la base Staging vers la base cible.
+
+        Parameters
+        ----------
+        staging_table_name : str
+            Nom de la table que l'on "copie".
+        db_table_name : str
+            Nom de la table que l'on "colle". 
+        """
+        if self.staging_db_config:
+            # Connexion aux deux bases
+            engine_source = self.init_engine(
+                staging_db_config["user"],
+                urllib.parse.quote(resolve_env_var(staging_db_config["password"])),
+                staging_db_config["host"],
+                staging_db_config["port"],
+                staging_db_config["dbname"]
+                )
+            engine_target = self.engine
+
+            # Copier de la base Staging
+            df = pd.read_sql("SELECT * FROM staging_table_name", engine_source)
+
+            # Coller dans la base cible
+            df.to_sql(db_table_name, engine_target, if_exists='replace', index=False)
+            self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base {staging_db_config["dbname"]} vers la base {self.db_name} sous le nom {db_table_name}.")
+        else:
+            self.logger.error("❌ La configuration de la base Staging n'a pas été indiquée.")
 
     def close(self):
         """Ferme la connexion à la base de données postgres."""

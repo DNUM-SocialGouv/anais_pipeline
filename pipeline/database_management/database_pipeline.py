@@ -12,7 +12,7 @@ from pipeline.utils.csv_management import TableInCsv
 # === Classes ===
 # Classe DataBasePipeline qui gère les actions relatives à n'importe quel database
 class DataBasePipeline:
-    def __init__(self, db_config: dict, config: dict, logger: Logger):
+    def __init__(self, db_config: dict, config: dict, logger: Logger, staging_db_config: dict = None):
         """
         Classe qui réalise les actions communes pour n'importe quel database.
         Cette classe est héritée par une classe relative au type de base.
@@ -34,11 +34,14 @@ class DataBasePipeline:
             Metadata du profile (dans metadata.yml).
         logger : logging.Logger
             Fichier de log.
+        staging_db_config : dict
+            Paramètres de connexion vers la base Staging, None by default.
         """
         self.sql_folder = config["create_table_directory"]
         self.csv_folder_input = config["local_directory_input"]
         self.csv_folder_output = config["local_directory_output"]
         self.db_config = db_config
+        self.staging_db_config = staging_db_config
         self.logger = logger
         self.ensure_directories_exist()
 
@@ -165,6 +168,21 @@ class DataBasePipeline:
                 self.logger.info(f"✅ Table créée avec succès : {sql_file.name}")
             except Exception as e:
                 self.logger.error(f"❌ Erreur lors de l'exécution du SQL {sql_file.name}: {e}")
+
+    def copy_table(self, views_to_import: dict):
+        """
+        Copie une table de staging vers une base cible.
+
+        Parameters
+        ----------
+        views_to_import : dict
+            Liste des vues à importer.
+        """
+        for staging_table_name, db_table_name in views_to_import.items():
+            if staging_table_name:
+                self.copy_table_from_staging(staging_table_name, db_table_name)
+            else:
+                self.logger.warning("⚠️ Aucune table spécifiée")
 
     def import_csv(self, views_to_import: dict):
         """
