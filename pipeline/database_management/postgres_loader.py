@@ -324,12 +324,12 @@ class PostgreSQLLoader(DataBasePipeline):
                 
                 df.to_sql(db_table_name, engine_target, if_exists='replace', index=False, schema=self.schema)
                 self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base {staging_db_config["dbname"]} vers la base {self.db_name} sous le nom {db_table_name}.")
-                else:
-                    self.logger.error("❌ La configuration de la base Staging n'a pas été indiquée.")
             except Exception as e:
                 trans.rollback()
                 self.logger.error(f"❌ Erreur lors de l'exécution : {e}")
                 raise
+        else:
+            self.logger.error("❌ La configuration de la base Staging n'a pas été indiquée.")
 
     def close(self):
         """Ferme la connexion à la base de données postgres."""
