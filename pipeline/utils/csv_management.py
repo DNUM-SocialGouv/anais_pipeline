@@ -107,7 +107,7 @@ class ReadCsvWithDelimiter:
         """
         Test la lecture du csv avec différents délimiteurs.
         """
-        delimiters_to_try = [self.dialect, "¤", ";", ","]
+        delimiters_to_try = ["¤", self.dialect, ";", ","]
         tried = set()
 
         for delimiter in delimiters_to_try:
