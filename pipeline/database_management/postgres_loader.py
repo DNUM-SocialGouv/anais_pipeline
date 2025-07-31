@@ -320,7 +320,7 @@ class PostgreSQLLoader(DataBasePipeline):
                 self.postgres_drop_table(conn, query_params)
                 trans.commit()
             
-            # df.to_sql(db_table_name, engine_target, if_exists='replace', index=False, schema=self.schema)
+            df.to_sql(db_table_name, engine_target, if_exists='replace', index=False, schema=self.schema)
             self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base {staging_db_config["dbname"]} vers la base {self.db_name} sous le nom {db_table_name}.")
         else:
             self.logger.error("❌ La configuration de la base Staging n'a pas été indiquée.")
