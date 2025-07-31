@@ -13,7 +13,7 @@ from pipeline.database_management.database_pipeline import DataBasePipeline
 # === Classes ===
 # Classe DuckDBPipeline qui gère les actions relatives à une database duckdb
 class DuckDBPipeline(DataBasePipeline):
-    def __init__(self, db_config: dict, config: dict, logger: Logger, staging_db_config: dict):
+    def __init__(self, db_config: dict, config: dict, logger: Logger, staging_db_config: dict = None):
         """
         Initialisation de la base DuckDB. Classe héritière de DataBasePipeline.
 

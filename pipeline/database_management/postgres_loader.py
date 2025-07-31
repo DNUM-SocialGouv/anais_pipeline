@@ -18,7 +18,7 @@ load_dotenv()
 # === Classes ===
 # Classe PostgreSQLLoader qui gère les actions relatives à une database postgres
 class PostgreSQLLoader(DataBasePipeline):
-    def __init__(self, db_config: dict, config: dict, logger: Logger, staging_db_config: dict):
+    def __init__(self, db_config: dict, config: dict, logger: Logger, staging_db_config: dict = None):
         """
         Initialisation de la base Postgres. Classe héritière de DataBasePipeline.
 
