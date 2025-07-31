@@ -285,6 +285,7 @@ class PostgreSQLLoader(DataBasePipeline):
             Dataframe de la table chargée.
         """
         conn.execute(text(f"SET search_path TO {self.schema}"))
+        conn.commit()
         return pd.read_sql_table(table_name, conn)
 
     def copy_table_from_staging(self, conn, staging_table_name: str, db_table_name: str):
