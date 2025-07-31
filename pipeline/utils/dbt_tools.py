@@ -39,7 +39,7 @@ def run_dbt(profile: str, target: Literal["local", "anais"], project_dir: str, p
         profiles_path = str(Path(profiles_dir).resolve())
 
         if not os.path.exists(os.path.join(project_path, "package-lock.yml")):
-            dbt_deps = dbt_deps(project_path)
+            dbt_deps_install = dbt_deps(project_path)
 
         result = subprocess.run(
             ["dbt",
