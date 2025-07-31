@@ -179,10 +179,14 @@ def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_
     ddb_loader = DuckDBPipeline(
         db_config=db_config,
         config=config,
-        logger=logger)
+        logger=logger,
+        staging_db_config=staging_db_config
+        )
 
+    # Remplissage des tables de la base postgres  
     ddb_loader.connect()
-    ddb_loader.run()
+    ddb_loader.copy_table(config["input_to_download"])
+    # ddb_loader.run()
     ddb_loader.close()
 
     # Création des vues et export
