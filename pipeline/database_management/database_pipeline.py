@@ -180,7 +180,7 @@ class DataBasePipeline:
         """
         for staging_table_name, db_table_name in views_to_import.items():
             if staging_table_name:
-                self.copy_table_from_staging(staging_table_name, db_table_name)
+                self.copy_table_from_staging(self.conn, staging_table_name, db_table_name)
             else:
                 self.logger.warning("⚠️ Aucune table spécifiée")
 

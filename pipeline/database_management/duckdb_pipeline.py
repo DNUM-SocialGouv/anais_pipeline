@@ -252,7 +252,7 @@ class DuckDBPipeline(DataBasePipeline):
         df = conn.execute(f"SELECT * FROM {table_name}").df()
         return df
 
-    def copy_table_from_staging(self, staging_table_name: str, db_table_name: str):
+    def copy_table_from_staging(self, conn, staging_table_name: str, db_table_name: str):
         """
         Copie d'une table de la base Staging vers la base cible.
 
@@ -268,13 +268,13 @@ class DuckDBPipeline(DataBasePipeline):
             staging_db_path = self.staging_db_config.get("path")
 
             try:
-                self.conn.execute("DETACH staging_db")
+                conn.execute("DETACH staging_db")
             except Exception:
                 pass
-            self.conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
+            conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
 
             # Crée la table dans la base cible à partir de la table source
-            self.conn.execute(f"""
+            conn.execute(f"""
                 CREATE TABLE IF NOT EXISTS {db_table_name} AS
                 SELECT * FROM staging_db.{staging_table_name}
             """)

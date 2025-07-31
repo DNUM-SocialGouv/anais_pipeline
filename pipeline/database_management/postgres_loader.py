@@ -287,7 +287,7 @@ class PostgreSQLLoader(DataBasePipeline):
         conn.execute(text(f"SET search_path TO {self.schema}"))
         return pd.read_sql_table(table_name, conn)
 
-    def copy_table_from_staging(self, staging_table_name: str, db_table_name: str):
+    def copy_table_from_staging(self, conn, staging_table_name: str, db_table_name: str):
         """
         Copie d'une table de la base Staging vers la base cible.
 
@@ -316,7 +316,7 @@ class PostgreSQLLoader(DataBasePipeline):
             # Coller dans la base cible (suppression de la table avant)
             query_params = {"schema": self.schema, "table": db_table_name}
             if self.is_table_exist(conn, query_params):
-                self.postgres_drop_table(self.conn, query_params)
+                self.postgres_drop_table(conn, query_params)
 
             df.to_sql(db_table_name, engine_target, if_exists='replace', index=False)
             self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base {staging_db_config["dbname"]} vers la base {self.db_name} sous le nom {db_table_name}.")
