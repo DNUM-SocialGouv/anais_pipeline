@@ -1,5 +1,7 @@
 # === Packages ===
 from logging import Logger
+import os
+import os.path
 
 # === Modules ===
 from pipeline.utils.sftp_sync import SFTPSync
@@ -185,14 +187,32 @@ def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_
 
     # Remplissage des tables de la base postgres  
     ddb_loader.connect()
-    ddb_loader.copy_table(config["input_to_download"])
-    # ddb_loader.run()
-    ddb_loader.close()
 
-    # Création des vues et export
-    run_dbt(profile, "local", config["models_directory"], ".", logger)
+    try:
+        # Si la base duckDB Staging existe
+        if os.path.isfile(staging_db_config["path"]):
+            ddb_loader.copy_table(config["input_to_download"])
 
-    # Upload les vues
-    ddb_loader.connect()
-    ddb_loader.export_csv(config["files_to_upload"], date=today)
-    ddb_loader.close()
+        elif os.listdir(config["local_directory_input"]) and os.listdir(config["create_table_directory"]):
+            ddb_loader.run()
+        else:
+            logger.error(
+            "❌ Aucun moyen de remplir la base DuckDB n'a été trouvé.\n"
+            f"- Base DuckDB Staging introuvable à : {staging_db_config['path']}\n"
+            f"- OU répertoires vides :\n"
+            f"    > .csv : {config['local_directory_input']}\n"
+            f"    > .sql : {config['create_table_directory']}"
+        )
+    finally:
+        ddb_loader.close()
+
+    if os.path.isfile(db_config["path"]):
+        # Création des vues et export
+        run_dbt(profile, "local", config["models_directory"], ".", logger)
+
+        # Upload les vues
+        ddb_loader.connect()
+        ddb_loader.export_csv(config["files_to_upload"], date=today)
+        ddb_loader.close()
+    else:
+        logger.error(f"❌ Aucune base DuckDB trouvée en {db_config["path"]}")
