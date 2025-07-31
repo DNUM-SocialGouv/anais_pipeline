@@ -107,7 +107,7 @@ class ReadCsvWithDelimiter:
         """
         Test la lecture du csv avec différents délimiteurs.
         """
-        delimiters_to_try = ["¤", self.dialect, ";", ","]
+        delimiters_to_try = [self.dialect, "¤", ";", ","]
         tried = set()
 
         for delimiter in delimiters_to_try:
@@ -177,14 +177,14 @@ class ReadCsvWithDelimiter:
             Dataframe du csv.
         """
         try:
-            # if self.file_path.name == "sa_sivss.csv":
-            #     return self.read_csv_with_custom_delimiter("¤")
-            # else:
-            #     return self.read_csv_resilient()
             return self.read_csv_resilient()
         except Exception as e:
-            self.logger.error(f"❌ Lecture échouée pour {self.file_path.name} → {e}")
-            return
+            self.logger.warning(f"🔁 Tentative de lecture alternative avec délimiteur personnalisé '¤' après échec → {e}")
+            try:
+                return self.read_csv_with_custom_delimiter("¤")
+            except Exception as final_e:
+                self.logger.error(f"❌ Lecture échouée pour {self.file_path.name} même après tentative personnalisée → {final_e}")
+                return pd.DataFrame()
 
 
 class StandardizeColnames:
