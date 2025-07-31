@@ -299,7 +299,7 @@ class PostgreSQLLoader(DataBasePipeline):
             Nom de la table que l'on "colle". 
         """
         staging_db_config = self.staging_db_config
-        if staging_db_config
+        if staging_db_config:
             # Connexion aux deux bases
             engine_source = self.init_engine(
                 staging_db_config["user"],
