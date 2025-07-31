@@ -13,7 +13,7 @@ from pipeline.database_management.database_pipeline import DataBasePipeline
 # === Classes ===
 # Classe DuckDBPipeline qui gère les actions relatives à une database duckdb
 class DuckDBPipeline(DataBasePipeline):
-    def __init__(self, db_config: dict, config: dict, logger: Logger):
+    def __init__(self, db_config: dict, config: dict, logger: Logger, staging_db_config: dict):
         """
         Initialisation de la base DuckDB. Classe héritière de DataBasePipeline.
 
@@ -25,12 +25,15 @@ class DuckDBPipeline(DataBasePipeline):
             Metadata du profile (dans metadata.yml).
         logger : logging.Logger
             Fichier de log.
+        staging_db_config : dict
+            Paramètres de connexion vers la base Staging, None by default.
         """
-        super().__init__(db_config, config, logger)
+        super().__init__(db_config, config, logger, staging_db_config)
         self.logger = logger
         self.db_path = db_config.get("path")
         self.schema = db_config.get("schema")
         self.typedb = db_config.get("type")
+        self.staging_db_config = staging_db_config
         self.init_duckdb()
 
     def init_duckdb(self):
@@ -237,6 +240,31 @@ class DuckDBPipeline(DataBasePipeline):
         """
         df = conn.execute(f"SELECT * FROM {table_name}").df()
         return df
+
+    def copy_table_from_staging(self, staging_table_name: str, db_table_name: str):
+        """
+        Copie d'une table de la base Staging vers la base cible.
+
+        Parameters
+        ----------
+        staging_table_name : str
+            Nom de la table que l'on "copie".
+        db_table_name : str
+            Nom de la table que l'on "colle". 
+        """
+        if self.staging_db_config:
+            # Attache la base Staging
+            staging_db_path = self.staging_db_config.get("path")
+            self.conn.execute("ATTACH staging_db_path AS staging_db")
+
+            # Crée la table dans la base cible à partir de la table source
+            self.conn.execute("""
+                CREATE TABLE IF NOT EXISTS db_table_name AS
+                SELECT * FROM staging_db.staging_table_name
+            """)
+            self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
+        else:
+            self.logger.error("❌ La configuration de la base Staging n'a pas été indiquée.")
 
     def close(self):
         """ Ferme la connexion à la base de données Duckdb. """

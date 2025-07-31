@@ -51,7 +51,6 @@ class PostgreSQLLoader(DataBasePipeline):
         try:
             url = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}"
             engine = create_engine(url)
-            self.logger.info("Connexion PostgreSQL établie avec succès.")
             return engine
         except Exception as e:
             self.logger.error(f"Erreur de connexion PostgreSQL : {e}")
@@ -60,6 +59,7 @@ class PostgreSQLLoader(DataBasePipeline):
     def connect(self):
         """ Connexion à la base postgres. """
         self.conn = self.engine.connect()
+        self.logger.info("Connexion PostgreSQL établie avec succès.")
 
     def postgres_drop_table(self, conn, query_params: dict):
         """
