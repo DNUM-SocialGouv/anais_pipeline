@@ -311,7 +311,7 @@ class PostgreSQLLoader(DataBasePipeline):
             engine_target = self.engine
 
             # Copier de la base Staging
-            df = pd.read_sql("SELECT * FROM staging_table_name", engine_source)
+            df = pd.read_sql(f"SELECT * FROM {staging_table_name}", engine_source)
 
             # Coller dans la base cible
             df.to_sql(db_table_name, engine_target, if_exists='replace', index=False)
