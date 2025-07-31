@@ -72,7 +72,7 @@ class PostgreSQLLoader(DataBasePipeline):
         query_params : dict
             Paramètres à injecter dans la requête SQL.
         """
-        table_name = query_params['table']
+        # table_name = query_params['table']
 
         views = conn.execute(text("""
             SELECT DISTINCT dependent_ns.nspname, dependent_view.relname
@@ -81,8 +81,8 @@ class PostgreSQLLoader(DataBasePipeline):
             JOIN pg_class AS dependent_view ON pg_rewrite.ev_class = dependent_view.oid
             JOIN pg_class AS base_table ON pg_depend.refobjid = base_table.oid
             JOIN pg_namespace AS dependent_ns ON dependent_ns.oid = dependent_view.relnamespace
-            WHERE base_table.relname = :table
-        """), {"table": table_name}).fetchall()
+            WHERE base_table.relname = :table AND base_ns.nspname = :schema
+        """), query_params).fetchall()
 
         for schema, view in views:
             # Suppression des vues liées à la table
@@ -314,9 +314,9 @@ class PostgreSQLLoader(DataBasePipeline):
             df = pd.read_sql(f"SELECT * FROM {staging_table_name}", engine_source)
 
             # Coller dans la base cible (suppression de la table avant)
-            # query_params = {"schema": self.schema, "table": db_table_name}
-            # if self.is_table_exist(conn, query_params):
-            #     self.postgres_drop_table(conn, query_params)
+            query_params = {"schema": self.schema, "table": db_table_name}
+            if self.is_table_exist(conn, query_params):
+                self.postgres_drop_table(conn, query_params)
 
             df.to_sql(db_table_name, engine_target, if_exists='replace', index=False, schema=self.schema)
             self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base {staging_db_config["dbname"]} vers la base {self.db_name} sous le nom {db_table_name}.")
