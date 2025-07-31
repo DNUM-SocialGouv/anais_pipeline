@@ -97,7 +97,7 @@ class ReadCsvWithDelimiter:
             with open(self.file_path, 'r', encoding='utf-8-sig') as f:
                 sample = f.read(self.sample_size)
                 sniffer = csv.Sniffer()
-                dialect = sniffer.sniff(sample, delimiters=";,¤")
+                dialect = sniffer.sniff(sample, delimiters="¤;,")
                 return dialect.delimiter
         except Exception as e:
             self.logger.warning(f"⚠️ Impossible de détecter le délimiteur pour {self.file_path} : {e} → ';' utilisé par défaut.")
@@ -107,7 +107,7 @@ class ReadCsvWithDelimiter:
         """
         Test la lecture du csv avec différents délimiteurs.
         """
-        delimiters_to_try = [self.dialect, ";", ",", "¤"]
+        delimiters_to_try = [self.dialect, "¤", ";", ","]
         tried = set()
 
         for delimiter in delimiters_to_try:
@@ -177,11 +177,11 @@ class ReadCsvWithDelimiter:
             Dataframe du csv.
         """
         try:
-            if self.file_path.name == "sa_sivss.csv":
-                return self.read_csv_with_custom_delimiter("¤")
-            else:
-                return self.read_csv_resilient()
-            # return self.read_csv_resilient()
+            # if self.file_path.name == "sa_sivss.csv":
+            #     return self.read_csv_with_custom_delimiter("¤")
+            # else:
+            #     return self.read_csv_resilient()
+            return self.read_csv_resilient()
         except Exception as e:
             self.logger.error(f"❌ Lecture échouée pour {self.file_path.name} → {e}")
             return
