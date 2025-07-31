@@ -72,7 +72,6 @@ class PostgreSQLLoader(DataBasePipeline):
         query_params : dict
             Paramètres à injecter dans la requête SQL.
         """
-        schema = query_params['schema']
         table_name = query_params['table']
 
         views = conn.execute(text("""
@@ -82,8 +81,8 @@ class PostgreSQLLoader(DataBasePipeline):
             JOIN pg_class AS dependent_view ON pg_rewrite.ev_class = dependent_view.oid
             JOIN pg_class AS base_table ON pg_depend.refobjid = base_table.oid
             JOIN pg_namespace AS dependent_ns ON dependent_ns.oid = dependent_view.relnamespace
-            WHERE base_table.relname = :table AND base_ns.nspname = :schema
-        """), {"table": table_name, "schema": schema}).fetchall()
+            WHERE base_table.relname = :table
+        """), {"table": table_name}).fetchall()
 
         for schema, view in views:
             # Suppression des vues liées à la table
