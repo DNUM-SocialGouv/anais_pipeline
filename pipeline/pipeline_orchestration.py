@@ -220,7 +220,7 @@ def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_
             f"    > .sql : {config['create_table_directory']}"
         )
     finally:
-        duckdb_empty = loader.is_duckdb_empty()
+        duckdb_empty = ddb_loader.is_duckdb_empty()
         ddb_loader.close()
 
     # Vérifie si la base DuckDB est vide ou non avant de lancer le run dbt
