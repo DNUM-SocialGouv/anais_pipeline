@@ -1,6 +1,7 @@
 # === Packages ===
 from dotenv import load_dotenv
 import argparse
+from datetime import date
 
 # === Modules ===
 from pipeline.utils.load_yml import load_metadata_YAML
