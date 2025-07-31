@@ -313,7 +313,11 @@ class PostgreSQLLoader(DataBasePipeline):
             # Copier de la base Staging
             df = pd.read_sql(f"SELECT * FROM {staging_table_name}", engine_source)
 
-            # Coller dans la base cible
+            # Coller dans la base cible (suppression de la table avant)
+            query_params = {"schema": self.schema, "table": db_table_name}
+            if self.is_table_exist(conn, query_params):
+                self.postgres_drop_table(self.conn, query_params)
+
             df.to_sql(db_table_name, engine_target, if_exists='replace', index=False)
             self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base {staging_db_config["dbname"]} vers la base {self.db_name} sous le nom {db_table_name}.")
         else:
