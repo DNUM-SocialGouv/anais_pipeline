@@ -55,6 +55,17 @@ class DuckDBPipeline(DataBasePipeline):
         """ Connexion à la base DuckDB. """
         self.conn = duckdb.connect(database=self.db_path)
 
+    def is_duckdb_empty(self) -> bool:
+        """ Vérifie si la base DuckDB est vide ou non """
+        conn = self.conn
+        result = conn.execute("""
+            SELECT COUNT(*) 
+            FROM information_schema.tables 
+            WHERE table_schema NOT IN ('pg_catalog', 'information_schema')
+        """).fetchone()[0]
+        conn.close()
+        return result == 0
+
     def create_table(self, conn, sql_query: str, query_params: dict):
         """
         Exécution du fichier SQL Create Table.

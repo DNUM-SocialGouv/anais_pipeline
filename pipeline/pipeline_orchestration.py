@@ -89,12 +89,15 @@ def local_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
             f"    > .sql : {config['create_table_directory']}"
         )
     finally:
+        duckdb_empty = loader.is_duckdb_empty()
         loader.close()
 
-    if os.path.isfile(db_config["path"]):
+    # Vérifie si la base DuckDB est vide ou non avant de lancer le run dbt
+    if not duckdb_empty:
         # Création des vues et export
         run_dbt(profile, "local", config["models_directory"], ".", logger, install_deps=False)
-
+    else:
+        logger.error(f"❌ Base {db_config["path"]} vide ")
 
 def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_db_config: dict, today: str, logger: Logger):
     """
@@ -217,9 +220,11 @@ def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_
             f"    > .sql : {config['create_table_directory']}"
         )
     finally:
+        duckdb_empty = loader.is_duckdb_empty()
         ddb_loader.close()
 
-    if os.path.isfile(db_config["path"]):
+    # Vérifie si la base DuckDB est vide ou non avant de lancer le run dbt
+    if not duckdb_empty:
         # Création des vues et export
         run_dbt(profile, "local", config["models_directory"], ".", logger)
 
@@ -228,4 +233,4 @@ def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_
         ddb_loader.export_csv(config["files_to_upload"], date=today)
         ddb_loader.close()
     else:
-        logger.error(f"❌ Aucune base DuckDB trouvée en {db_config["path"]}")
+        logger.error(f"❌ Base {db_config["path"]} vide ")
