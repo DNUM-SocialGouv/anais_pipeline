@@ -387,14 +387,10 @@ class ColumnsManagement(StandardizeColnames):
             - Conversion des colonnes selont leur type SQL (VARCHAR, INT, BOOLEAN ...)
         """
         self.standardize_column_names()
+        self.resolve_duplicate_columns()
         self.check_missing_columns()
         self.get_column_length()
-        self.resolve_duplicate_columns()
         self.convert_columns_type()
-        if self.csv_file.resolve() == Path("input/staging/sa_tdb_esms.csv").resolve():
-            print(self.csv_file)
-            print(self.df.shape)
-            print(self.df.columns)
 
         return self.df
 
