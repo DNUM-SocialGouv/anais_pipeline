@@ -318,6 +318,41 @@ class ColumnsManagement(StandardizeColnames):
             .astype("Int64")
         )
 
+    def resolve_duplicate_columns(self):
+        """
+        Modifie les noms de colonnes en cas de doublon dans le DataFrame
+        en ajoutant un suffixe numérique (ex: 'col', 'col_1', 'col_2', ...),
+        tout en respectant la limite de 63 caractères pour les noms de colonnes.
+        """
+        MAX_LENGTH = 63
+        new_columns = []
+        seen = {}
+
+        for col in self.df.columns:
+            base_col = col
+            count = seen.get(col, 0)
+
+            if count == 0 and col not in new_columns:
+                seen[col] = 1
+                new_columns.append(col)
+            else:
+                # Génère un nom unique avec suffixe, en tenant compte de la longueur
+                while True:
+                    suffix = f"_{seen.get(base_col, 1)}"
+                    max_base_len = MAX_LENGTH - len(suffix)
+                    truncated_base = base_col[:max_base_len]
+                    new_col = f"{truncated_base}{suffix}"
+
+                    if new_col not in seen and new_col not in new_columns:
+                        break
+                    seen[base_col] = seen.get(base_col, 1) + 1
+
+                seen[new_col] = 1
+                seen[base_col] = seen.get(base_col, 1) + 1
+                new_columns.append(new_col)
+
+        self.df.columns = new_columns
+
     def convert_columns_type(self):
         """
         Convertie les colonnes du dataframe selon le type dans les tables SQL.
@@ -354,6 +389,7 @@ class ColumnsManagement(StandardizeColnames):
         self.standardize_column_names()
         self.check_missing_columns()
         self.get_column_length()
+        self.resolve_duplicate_columns()
         self.convert_columns_type()
 
         return self.df
