@@ -391,6 +391,8 @@ class ColumnsManagement(StandardizeColnames):
         self.get_column_length()
         self.resolve_duplicate_columns()
         self.convert_columns_type()
+        print(csv_file)
+        print(self.df.shape)
 
         return self.df
 
