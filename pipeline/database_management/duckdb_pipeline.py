@@ -274,6 +274,15 @@ class DuckDBPipeline(DataBasePipeline):
                 pass
             conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
             print(f"{staging_db_path}.{staging_db_schema}")
+            tables = conn.execute("""
+                SELECT table_schema, table_name 
+                FROM staging_db.information_schema.tables 
+                WHERE table_schema = 'main'
+            """).fetchall()
+
+            print("Tables dans staging_db.main :")
+            for schema, table in tables:
+                print(f"- {schema}.{table}")
             # Crée la table dans la base cible à partir de la table source
             conn.execute(f"""
                 CREATE TABLE IF NOT EXISTS {db_table_name} AS
