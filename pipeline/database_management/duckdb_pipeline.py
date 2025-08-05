@@ -272,7 +272,8 @@ class DuckDBPipeline(DataBasePipeline):
             except Exception:
                 pass
             conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
-
+            print(db_table_name)
+            print(staging_table_name)
             # Crée la table dans la base cible à partir de la table source
             conn.execute(f"""
                 CREATE TABLE IF NOT EXISTS {db_table_name} AS
