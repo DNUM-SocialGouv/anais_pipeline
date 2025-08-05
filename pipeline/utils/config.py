@@ -10,7 +10,7 @@ from pipeline.utils.logging_management import setup_logger
 # === Constantes ===
 load_dotenv()
 ENV_CHOICE = ["local", "anais"]
-PROFILE_CHOICE = ["Staging", "CertDC", "Helios", "InspectionControlePA"]
+PROFILE_CHOICE = ["Staging", "CertDC", "Helios", "InspectionControlePA", "InspectionControlePH"]
 METADATA_YML = "metadata.yml"
 PROFILE_YML = "profiles.yml"
 
