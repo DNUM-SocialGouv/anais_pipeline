@@ -266,14 +266,14 @@ class DuckDBPipeline(DataBasePipeline):
         if self.staging_db_config:
             # Attache la base Staging
             staging_db_path = self.staging_db_config.get("path")
+            staging_db_schema = self.staging_db_config.get("schema")
 
             try:
                 conn.execute("DETACH staging_db")
             except Exception:
                 pass
-            conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
-            print(db_table_name)
-            print(staging_table_name)
+            conn.execute(f"ATTACH '{staging_db_path}.{staging_db_schema}' AS staging_db")
+
             # Crée la table dans la base cible à partir de la table source
             conn.execute(f"""
                 CREATE TABLE IF NOT EXISTS {db_table_name} AS
