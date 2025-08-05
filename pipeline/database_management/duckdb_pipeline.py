@@ -265,29 +265,17 @@ class DuckDBPipeline(DataBasePipeline):
         """
         if self.staging_db_config:
             # Attache la base Staging
-            staging_db_path = self.staging_db_config.get("path")
+            staging_db_path = Path(self.staging_db_config.get("path"))
             staging_db_schema = self.staging_db_config.get("schema")
 
-            try:
-                conn.execute("DETACH staging_db")
-            except Exception:
-                pass
             conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
-            print(f"{staging_db_path}.{staging_db_schema}")
-            tables = conn.execute("""
-                SELECT table_schema, table_name 
-                FROM staging_db.information_schema.tables 
-                WHERE table_schema = 'main'
-            """).fetchall()
 
-            print("Tables dans staging_db.main :")
-            for schema, table in tables:
-                print(f"- {schema}.{table}")
             # Crée la table dans la base cible à partir de la table source
             conn.execute(f"""
                 CREATE TABLE IF NOT EXISTS {db_table_name} AS
                 SELECT * FROM staging_db.{staging_db_schema}.{staging_table_name}
             """)
+            conn.execute("DETACH staging_db")
             self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
         else:
             self.logger.error("❌ La configuration de la base Staging n'a pas été indiquée.")
