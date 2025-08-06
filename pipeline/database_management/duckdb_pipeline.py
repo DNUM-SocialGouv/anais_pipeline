@@ -302,9 +302,10 @@ class DuckDBPipeline(DataBasePipeline):
 
                 # Attache proprement la base staging
                 self.conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
-                print(conn.execute("SHOW TABLES FROM staging_db").fetchall())
+
             except Exception as e:
                 self.logger.error(f"Erreur lors de l'ATTACH/DETACH : {e}")
+            print(conn.execute("SHOW TABLES FROM staging_db").fetchall())
             print(staging_table_name)
             df = self.conn.execute(f"SELECT * FROM staging_db.{staging_table_name}").fetchdf()
 
