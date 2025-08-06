@@ -292,36 +292,44 @@ class DuckDBPipeline(DataBasePipeline):
             # Récupération de la table dans Staging
             staging_db_path = Path(self.staging_db_config.get("path"))
 
-            # Attache de la base Staging
-            try:
-                # Tente de détacher 'staging_db' si elle est déjà attachée
-                try:
-                    conn.execute("DETACH staging_db")
-                    conn.execute("DETACH project_db")
-                except Exception:
-                    pass
+            staging_con = duckdb.connect(staging_db_path)
 
-                # Attache proprement la base staging
-                conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
-                conn.execute(f"ATTACH '{self.db_path}' AS project_db")
+            # Crée une table matérialisée pour éviter les dépendances de vue
+            df = staging_con.execute(f"SELECT * FROM staging_db.main.{staging_table_name}").fetchdf()
 
-            except Exception as e:
-                self.logger.error(f"Erreur lors de l'ATTACH/DETACH : {e}")
-            # print(conn.execute("SHOW ALL TABLES").fetchall())
-            print(staging_table_name, db_table_name)
-            df = conn.execute(f"SELECT * FROM staging_db.main.{staging_table_name}").fetchdf()
-            print("TEST")
-            # Coller dans la base cible (suppression de la table avant)
-            try:
-                conn.execute(f"""
-                    CREATE TABLE project_db.{db_table_name} AS
-                    SELECT * FROM df
-                """)
+            staging_con.close()
 
-                self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
+            print(df.head(5))
+            # # Attache de la base Staging
+            # try:
+            #     # Tente de détacher 'staging_db' si elle est déjà attachée
+            #     try:
+            #         conn.execute("DETACH staging_db")
+            #         conn.execute("DETACH project_db")
+            #     except Exception:
+            #         pass
+
+            #     # Attache proprement la base staging
+            #     conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
+            #     conn.execute(f"ATTACH '{self.db_path}' AS project_db")
+
+            # except Exception as e:
+            #     self.logger.error(f"Erreur lors de l'ATTACH/DETACH : {e}")
+            # # print(conn.execute("SHOW ALL TABLES").fetchall())
+            # print(staging_table_name, db_table_name)
+            # df = conn.execute(f"SELECT * FROM staging_db.main.{staging_table_name}").fetchdf()
+            # print("TEST")
+            # # Coller dans la base cible (suppression de la table avant)
+            # try:
+            #     conn.execute(f"""
+            #         CREATE TABLE project_db.{db_table_name} AS
+            #         SELECT * FROM df
+            #     """)
+
+            #     self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
                 
-            except Exception as e:
-                self.logger.error(f"❌ Erreur lors de la copie de la table {db_table_name} provenant de staging : {e}")  
+            # except Exception as e:
+            #     self.logger.error(f"❌ Erreur lors de la copie de la table {db_table_name} provenant de staging : {e}")  
 
         else:
             self.logger.error("❌ La configuration de la base Staging n'a pas été indiquée.")
