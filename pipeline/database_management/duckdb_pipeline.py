@@ -285,27 +285,21 @@ class DuckDBPipeline(DataBasePipeline):
             Nom de la table que l'on "colle". 
         """
         if self.staging_db_config:
-            # Attache la base Staging
+            # Récupération de la table dans Staging
             staging_db_path = Path(self.staging_db_config.get("path"))
-            staging_db_schema = self.staging_db_config.get("schema")
 
-            print(f"staging_table_name = '{db_table_name}'")
             conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
-            df = conn.execute(f"SELECT * FROM staging_db.{db_table_name}").fetchdf()
+            df = conn.execute(f"SELECT * FROM staging_db.{staging_table_name}").fetchdf()
+
+            # Création de la table dans la base du projet
             conn.execute(f"""
                 CREATE TABLE {db_table_name} AS
                 SELECT * FROM df
             """)
-            print(df.shape)
-            # Crée la table dans la base cible à partir de la table source
-            print(staging_db_path)
-            # conn.execute(f"""
-            #     CREATE TABLE main.{db_table_name} AS
-            #     SELECT * FROM staging_db.{staging_table_name}
-            # """)
+
             conn.execute("DETACH staging_db")
             self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
-            # Récupération de la table dans Staging
+            
 
             # # Récupération de la table dans Staging
             # staging_db_path = Path(self.staging_db_config.get("path"))
@@ -322,7 +316,7 @@ class DuckDBPipeline(DataBasePipeline):
             #     CREATE TABLE IF NOT EXISTS {db_table_name} AS
             #     SELECT * FROM temp_df
             # """)
-            self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
+            # self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
         else:
             self.logger.error("❌ La configuration de la base Staging n'a pas été indiquée.")
 
