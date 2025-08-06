@@ -273,6 +273,33 @@ class DuckDBPipeline(DataBasePipeline):
         # except Exception as e:
         #     print(f"Erreur lors de la récupération de la table {table_name} : {e}")
 
+    def duckdb_drop_table(self, conn, query_params: dict):
+        """
+        Supprime une table et les vues qui lui sont liées.
+
+        Parameters
+        ----------
+        conn : sqlalchemy.engine.base.Connection
+            Connexion à la base duckDB.
+        query_params : dict
+            Paramètres à injecter dans la requête SQL.
+        """
+        table_name = query_params['table']
+
+        views = conn.execute(f"""
+            SELECT table_name
+            FROM information_schema.view_table_usage
+            WHERE referenced_table_name = '{table_name}'
+        """).fetchall()
+
+        for (view,) in views:
+            self.logger.info(f"🗑 Vue '{view}' existante → suppression totale (DROP VIEW)")
+            conn.execute(f'DROP VIEW IF EXISTS "{view}"')
+
+        # Suppression de la table
+        self.logger.info(f"🗑 Table '{table_name}' existante → suppression totale (DROP TABLE)")
+        conn.execute(f"DROP TABLE IF EXISTS {table_name}")
+
     def copy_table_from_staging(self, conn, staging_table_name: str, db_table_name: str):
         """
         Copie d'une table de la base Staging vers la base cible.
@@ -291,15 +318,24 @@ class DuckDBPipeline(DataBasePipeline):
             conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
             df = conn.execute(f"SELECT * FROM staging_db.{staging_table_name}").fetchdf()
 
+            # Coller dans la base cible (suppression de la table avant)
+            query_params = {"schema": self.schema, "table": db_table_name}
+
+            try:
+                if self.is_table_exist(conn, query_params):
+                    self.duckdb_drop_table(conn, query_params)
+
             # Création de la table dans la base du projet
             conn.execute(f"""
-                CREATE TABLE {db_table_name} AS
+                CREATE TABLE IF NOT EXISTS {db_table_name} AS
                 SELECT * FROM df
             """)
 
             conn.execute("DETACH staging_db")
             self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
             
+            except Exception as e:
+                self.logger.error(f"❌ Erreur lors de la copie de la table {db_table_name} provenant de staging : {e}")            
 
             # # Récupération de la table dans Staging
             # staging_db_path = Path(self.staging_db_config.get("path"))
