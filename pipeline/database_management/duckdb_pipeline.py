@@ -285,21 +285,36 @@ class DuckDBPipeline(DataBasePipeline):
             Nom de la table que l'on "colle". 
         """
         if self.staging_db_config:
-            # Récupération de la table dans Staging
+            # Attache la base Staging
             staging_db_path = Path(self.staging_db_config.get("path"))
-            staging_connect = duckdb.connect(staging_db_path)
-            df = staging_connect.execute(
-                f"SELECT * FROM {staging_table_name}"
-            ).fetchdf()
-            staging_connect.close()
+            staging_db_schema = self.staging_db_config.get("schema")
 
-            # Ajout de la table dans la base du projet
-            conn.register("temp_df", df)
-            print("Ok")
+            conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
+
+            # Crée la table dans la base cible à partir de la table source
             conn.execute(f"""
                 CREATE TABLE IF NOT EXISTS {db_table_name} AS
-                SELECT * FROM temp_df
+                SELECT * FROM staging_db.{staging_table_name}
             """)
+            conn.execute("DETACH staging_db")
+            self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
+            # Récupération de la table dans Staging
+
+            # # Récupération de la table dans Staging
+            # staging_db_path = Path(self.staging_db_config.get("path"))
+            # staging_connect = duckdb.connect(staging_db_path)
+            # df = staging_connect.execute(
+            #     f"SELECT * FROM {staging_table_name}"
+            # ).fetchdf()
+            # staging_connect.close()
+
+            # # Ajout de la table dans la base du projet
+            # conn.register("temp_df", df)
+            # print("Ok")
+            # conn.execute(f"""
+            #     CREATE TABLE IF NOT EXISTS {db_table_name} AS
+            #     SELECT * FROM temp_df
+            # """)
             self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
         else:
             self.logger.error("❌ La configuration de la base Staging n'a pas été indiquée.")
