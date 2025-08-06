@@ -319,7 +319,8 @@ class DuckDBPipeline(DataBasePipeline):
 
             try:
                 # Vérifie si le schema 'staging_db' est déjà attaché
-                schemas = [row[0] for row in conn.execute("SHOW SCHEMAS").fetchall()]
+                attached_dbs = conn.execute("PRAGMA database_list").fetchall()
+                schemas = [row[1] for row in attached_dbs]
                 if 'staging_db' in schemas:
                     conn.execute("DETACH staging_db")
 
