@@ -250,6 +250,7 @@ class DuckDBPipeline(DataBasePipeline):
             Dataframe de la table chargée.
         """
         df = conn.execute(f"SELECT * FROM {table_name}").df()
+        print(df.shape)
         return df
 
     def copy_table_from_staging(self, conn, staging_table_name: str, db_table_name: str):
