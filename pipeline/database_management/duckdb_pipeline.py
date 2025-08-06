@@ -286,12 +286,12 @@ class DuckDBPipeline(DataBasePipeline):
         """
         table_name = query_params['table']
 
-        views = conn.execute(f"""
-            SELECT table_name
-            FROM information_schema.view_table_usage
-            WHERE referenced_table_name = '{table_name}'
-        """).fetchall()
-
+        views = conn.execute("""
+            SELECT table_name, sql
+            FROM duckdb_views()
+            WHERE sql LIKE '%' || ? || '%'
+        """, [table_name]).fetchall()
+        print(views)
         for (view,) in views:
             self.logger.info(f"🗑 Vue '{view}' existante → suppression totale (DROP VIEW)")
             conn.execute(f'DROP VIEW IF EXISTS "{view}"')
