@@ -299,7 +299,7 @@ class DuckDBPipeline(DataBasePipeline):
             #     CREATE TABLE IF NOT EXISTS {db_table_name} AS
             #     SELECT * FROM {staging_table_name}
             # """)
-            df = staging_con.execute("SELECT * FROM staging__matrice_tdb_esms").fetchdf()
+            df = staging_con.execute(f"SELECT * FROM {staging_table_name}").fetchdf()
             
             staging_con.close()
             print(df.shape)
