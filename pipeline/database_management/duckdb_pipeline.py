@@ -287,9 +287,11 @@ class DuckDBPipeline(DataBasePipeline):
         if self.staging_db_config:
             # Récupération de la table dans Staging
             staging_db_path = Path(self.staging_db_config.get("path"))
-            df = duckdb.connect(staging_db_path).execute(
+            staging_connect = duckdb.connect(staging_db_path)
+            df = staging_connect.execute(
                 f"SELECT * FROM {staging_table_name}"
             ).fetchdf()
+            staging_connect.close()
 
             # Ajout de la table dans la base du projet
             conn.register("temp_df", df)
