@@ -291,7 +291,23 @@ class DuckDBPipeline(DataBasePipeline):
 
             # Récupération de la table dans Staging
             staging_db_path = Path(self.staging_db_config.get("path"))
+            # Attache de la base Staging
+            try:
+                # Tente de détacher 'staging_db' si elle est déjà attachée
+                try:
+                    conn.execute("DETACH staging_db")
+                    conn.execute("DETACH project_db")
+                except Exception:
+                    pass
 
+                # Attache proprement la base staging
+                conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
+                conn.execute(f"ATTACH '{self.db_path}' AS project_db")
+
+            except Exception as e:
+                self.logger.error(f"Erreur lors de l'ATTACH/DETACH : {e}")
+
+            
             staging_con = duckdb.connect(staging_db_path)
 
             # Crée une table matérialisée pour éviter les dépendances de vue
@@ -300,21 +316,7 @@ class DuckDBPipeline(DataBasePipeline):
             staging_con.close()
 
             print(df.head(5))
-            # # Attache de la base Staging
-            # try:
-            #     # Tente de détacher 'staging_db' si elle est déjà attachée
-            #     try:
-            #         conn.execute("DETACH staging_db")
-            #         conn.execute("DETACH project_db")
-            #     except Exception:
-            #         pass
 
-            #     # Attache proprement la base staging
-            #     conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
-            #     conn.execute(f"ATTACH '{self.db_path}' AS project_db")
-
-            # except Exception as e:
-            #     self.logger.error(f"Erreur lors de l'ATTACH/DETACH : {e}")
             # # print(conn.execute("SHOW ALL TABLES").fetchall())
             # print(staging_table_name, db_table_name)
             # df = conn.execute(f"SELECT * FROM staging_db.main.{staging_table_name}").fetchdf()
