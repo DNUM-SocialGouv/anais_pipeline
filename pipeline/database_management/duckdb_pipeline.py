@@ -249,6 +249,12 @@ class DuckDBPipeline(DataBasePipeline):
         pd.DataFrame
             Dataframe de la table chargée.
         """
+        tables = conn.execute("SHOW TABLES").fetchall()
+        table_list = [t[0] for t in tables]
+        print(f"[DEBUG] Tables disponibles : {table_list}")
+        if table_name not in table_list:
+            raise ValueError(f"La table '{table_name}' n'existe pas dans la base.")
+            
         try:
             df = conn.execute(f"SELECT * FROM {table_name}").df()
             print(df.shape)
