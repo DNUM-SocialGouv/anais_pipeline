@@ -296,21 +296,21 @@ class DuckDBPipeline(DataBasePipeline):
             try:
                 # Tente de détacher 'staging_db' si elle est déjà attachée
                 try:
-                    conn.execute("DETACH staging_db")
+                    self.conn.execute("DETACH staging_db")
                 except Exception:
                     pass
 
                 # Attache proprement la base staging
-                conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
+                self.conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
 
             except Exception as e:
                 self.logger.error(f"Erreur lors de l'ATTACH/DETACH : {e}")
             print(staging_table_name)
-            df = conn.execute(f"SELECT * FROM staging_db.{staging_table_name}").fetchdf()
+            df = self.conn.execute(f"SELECT * FROM staging_db.{staging_table_name}").fetchdf()
 
             # Coller dans la base cible (suppression de la table avant)
             try:
-                conn.execute(f"""
+                self.conn.execute(f"""
                     CREATE TABLE {db_table_name} AS
                     SELECT * FROM df
                 """)
