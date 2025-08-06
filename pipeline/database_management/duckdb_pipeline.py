@@ -317,12 +317,15 @@ class DuckDBPipeline(DataBasePipeline):
             # Récupération de la table dans Staging
             staging_db_path = Path(self.staging_db_config.get("path"))
 
+            # Attache de la base Staging
             try:
-                # Vérifie si le schema 'staging_db' est déjà attaché
-                schemas = [row[0] for row in conn.execute("SHOW SCHEMAS").fetchall()]
-                if 'staging_db' in schemas:
+                # Tente de détacher 'staging_db' si elle est déjà attachée
+                try:
                     conn.execute("DETACH staging_db")
+                except Exception:
+                    pass
 
+                # Attache proprement la base staging
                 conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
 
             except Exception as e:
