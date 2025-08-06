@@ -288,7 +288,7 @@ class DuckDBPipeline(DataBasePipeline):
             # Attache la base Staging
             staging_db_path = Path(self.staging_db_config.get("path"))
             staging_db_schema = self.staging_db_config.get("schema")
-
+            conn.execute("DETACH staging_db")
             conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
             df = conn.execute(f"SELECT * FROM staging_db.sa_siicea_cibles LIMIT 5").fetchdf()
             print(df.shape)
@@ -298,7 +298,7 @@ class DuckDBPipeline(DataBasePipeline):
             #     CREATE TABLE main.{db_table_name} AS
             #     SELECT * FROM staging_db.{staging_table_name}
             # """)
-            # conn.execute("DETACH staging_db")
+            conn.execute("DETACH staging_db")
             self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
             # Récupération de la table dans Staging
 
