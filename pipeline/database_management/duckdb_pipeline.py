@@ -295,6 +295,7 @@ class DuckDBPipeline(DataBasePipeline):
 
             # Ajout de la table dans la base du projet
             conn.register("temp_df", df)
+            print("Ok")
             conn.execute(f"""
                 CREATE TABLE IF NOT EXISTS {db_table_name} AS
                 SELECT * FROM temp_df
