@@ -348,9 +348,7 @@ class DuckDBPipeline(DataBasePipeline):
                     self.duckdb_drop_table(conn, query_params)
 
                 # Création de la nouvelle table à partir du DataFrame
-                conn.register("df", df)
                 conn.execute(f"CREATE TABLE {db_table_name} AS SELECT * FROM df")
-                conn.unregister("df")
 
                 self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
 
