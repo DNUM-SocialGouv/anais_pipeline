@@ -292,9 +292,10 @@ class DuckDBPipeline(DataBasePipeline):
             # conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
 
             # Crée la table dans la base cible à partir de la table source
+            print(staging_db_path)
             conn.execute(f"""
                 CREATE TABLE IF NOT EXISTS {db_table_name} AS
-                SELECT * FROM '{staging_db_path}'.{staging_table_name}
+                SELECT * FROM {str(staging_db_path)}.{staging_table_name}
             """)
             # conn.execute("DETACH staging_db")
             self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
