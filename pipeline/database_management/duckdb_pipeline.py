@@ -322,13 +322,12 @@ class DuckDBPipeline(DataBasePipeline):
                 schemas = [row[0] for row in conn.execute("SHOW SCHEMAS").fetchall()]
                 if 'staging_db' in schemas:
                     conn.execute("DETACH staging_db")
-                    print("Detached existing staging_db")
 
                 conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
-                print("Attached new staging_db")
 
             except Exception as e:
-                print(f"Erreur lors de l'ATTACH/DETACH : {e}")
+                self.logger.error(f"Erreur lors de l'ATTACH/DETACH : {e}")
+    
             df = conn.execute(f"SELECT * FROM staging_db.{staging_table_name}").fetchdf()
 
             # Coller dans la base cible (suppression de la table avant)
