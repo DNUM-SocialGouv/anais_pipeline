@@ -268,7 +268,8 @@ class DuckDBPipeline(DataBasePipeline):
 
 
         try:
-            df = conn.execute(f"SELECT * FROM {table_name}").df()
+            df = conn.execute(f"SELECT * FROM {table_name}").fetchdf()
+            # df = conn.execute(f"SELECT * FROM {table_name}").df()
             print(df.shape)
             return df
         except Exception as e:
