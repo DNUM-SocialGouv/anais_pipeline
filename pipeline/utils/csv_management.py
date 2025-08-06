@@ -463,6 +463,8 @@ class TableInCsv:
         try:
             # Exportation
             df = self.df_fetch_func(self.conn, self.table_name)
+            print(self.table_name, df.shape)
+            print(output_path)
             df.to_csv(output_path, index=False, sep=";", encoding="utf-8-sig")
             self.logger.info(f"✅ Export réussi : {file_name}")
         except Exception as e:
