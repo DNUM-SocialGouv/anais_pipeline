@@ -292,17 +292,11 @@ class DuckDBPipeline(DataBasePipeline):
             # Récupération de la table dans Staging
             staging_db_path = Path(self.staging_db_config.get("path"))
             
-            staging_con = duckdb.connect(staging_db_path)
+            # Connexion à la base staging
+            staging_conn = duckdb.connect(staging_db_path)
+            df = staging_conn.execute(f"SELECT * FROM {staging_table_name}").fetchdf()
+            staging_conn.close()
 
-            # Crée une table matérialisée pour éviter les dépendances de vue
-            # staging_con.execute(f"""
-            #     CREATE TABLE IF NOT EXISTS {db_table_name} AS
-            #     SELECT * FROM {staging_table_name}
-            # """)
-            df = staging_con.execute(f"SELECT * FROM {staging_table_name}").fetchdf()
-            
-            staging_con.close()
-            print(df.shape)
             # # Attache de la base Staging
             # try:
             #     # Tente de détacher 'staging_db' si elle est déjà attachée
@@ -322,14 +316,15 @@ class DuckDBPipeline(DataBasePipeline):
             # # print(staging_table_name, db_table_name)
             # df = conn.execute(f"SELECT * FROM staging_db.{db_table_name}").fetchdf()
             # print(df.shape)
-            # # Coller dans la base cible (suppression de la table avant)
-            # try:
-            #     conn.execute(f"""
-            #         CREATE TABLE project_db.{db_table_name} AS
-            #         SELECT * FROM df
-            #     """)
+            # Coller dans la base cible (suppression de la table avant)
+            try:
+                conn.register("staging_data", df)
+                conn.execute(f"""
+                    CREATE TABLE IF NOT EXISTS {db_table_name} AS
+                    SELECT * FROM staging_data
+                """)
 
-            #     self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
+                self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
                 
             # except Exception as e:
             #     self.logger.error(f"❌ Erreur lors de la copie de la table {db_table_name} provenant de staging : {e}")  
