@@ -326,8 +326,8 @@ class DuckDBPipeline(DataBasePipeline):
 
                 self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
                 
-            # except Exception as e:
-            #     self.logger.error(f"❌ Erreur lors de la copie de la table {db_table_name} provenant de staging : {e}")  
+            except Exception as e:
+                self.logger.error(f"❌ Erreur lors de la copie de la table {db_table_name} provenant de staging : {e}")  
 
         else:
             self.logger.error("❌ La configuration de la base Staging n'a pas été indiquée.")
