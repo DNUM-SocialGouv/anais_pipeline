@@ -251,10 +251,17 @@ class DuckDBPipeline(DataBasePipeline):
         """
         tables = conn.execute("SHOW TABLES").fetchall()
         table_list = [t[0] for t in tables]
-        print(f"[DEBUG] Tables disponibles : {table_list}")
+        # print(f"[DEBUG] Tables disponibles : {table_list}")
         if table_name not in table_list:
             raise ValueError(f"La table '{table_name}' n'existe pas dans la base.")
-            
+        # Obtenir les colonnes et leurs types
+        table_info = conn.execute(f"PRAGMA table_info('{table_name}')").fetchall()
+
+        print(f"[DEBUG] Colonnes et types de '{table_name}' :")
+        
+        for col in table_info:
+            # col est une tuple comme : (column_id, name, type, not_null, default_value, primary_key)
+            print(f" - {col[1]} : {col[2]}")            
         try:
             df = conn.execute(f"SELECT * FROM {table_name}").df()
             print(df.shape)
