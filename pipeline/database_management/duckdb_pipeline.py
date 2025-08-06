@@ -261,7 +261,9 @@ class DuckDBPipeline(DataBasePipeline):
 
         for col in table_info:
             # col est une tuple comme : (column_id, name, type, not_null, default_value, primary_key)
-            print(f" - {col[1]} : {col[2]}")            
+            print(f" - {col[1]} : {col[2]}")
+        row_count = conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
+        print(f"[DEBUG] Nombre de lignes dans '{table_name}' : {row_count}")        
         # try:
         #     df = conn.execute(f"SELECT * FROM {table_name}").df()
         #     print(df.shape)
