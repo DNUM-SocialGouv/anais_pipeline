@@ -305,7 +305,7 @@ class DuckDBPipeline(DataBasePipeline):
 
             except Exception as e:
                 self.logger.error(f"Erreur lors de l'ATTACH/DETACH : {e}")
-    
+            print(staging_table_name)
             df = conn.execute(f"SELECT * FROM staging_db.{staging_table_name}").fetchdf()
 
             # Coller dans la base cible (suppression de la table avant)
