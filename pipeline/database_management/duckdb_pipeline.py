@@ -249,9 +249,12 @@ class DuckDBPipeline(DataBasePipeline):
         pd.DataFrame
             Dataframe de la table chargée.
         """
-        df = conn.execute(f"SELECT * FROM {table_name}").df()
-        print(df.shape)
-        return df
+        try:
+            df = conn.execute(f"SELECT * FROM {table_name}").df()
+            print(df.shape)
+            return df
+        except Exception as e:
+            self.logger.error(f"Erreur lors de la récupération de la table {table_name} : {e}")
 
     def copy_table_from_staging(self, conn, staging_table_name: str, db_table_name: str):
         """
