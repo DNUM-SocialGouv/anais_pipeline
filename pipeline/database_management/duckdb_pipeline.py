@@ -305,7 +305,7 @@ class DuckDBPipeline(DataBasePipeline):
 
             except Exception as e:
                 self.logger.error(f"Erreur lors de l'ATTACH/DETACH : {e}")
-            print(conn.execute("SHOW TABLES FROM staging_db").fetchall())
+            print(conn.execute("SHOW TABLES IN staging_db").fetchall())
             print(staging_table_name)
             df = self.conn.execute(f"SELECT * FROM staging_db.{staging_table_name}").fetchdf()
 
