@@ -290,7 +290,7 @@ class DuckDBPipeline(DataBasePipeline):
             staging_db_schema = self.staging_db_config.get("schema")
 
             conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
-            df = conn.execute(f"SELECT * FROM staging_db.sa_siicea_cibles").fetchdf()
+            df = conn.execute(f"SELECT * FROM staging_db.{staging_table_name}").fetchdf()
             conn.execute(f"""
                 CREATE TABLE {db_table_name} AS
                 SELECT * FROM df
