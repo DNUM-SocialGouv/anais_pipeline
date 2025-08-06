@@ -250,30 +250,9 @@ class DuckDBPipeline(DataBasePipeline):
         pd.DataFrame
             Dataframe de la table chargée.
         """
-        # tables = conn.execute("SHOW TABLES").fetchall()
-        # table_list = [t[0] for t in tables]
-        # # print(f"[DEBUG] Tables disponibles : {table_list}")
-        # if table_name not in table_list:
-        #     raise ValueError(f"La table '{table_name}' n'existe pas dans la base.")
-        # # Obtenir les colonnes et leurs types
-        # table_info = conn.execute(f"PRAGMA table_info('{table_name}')").fetchall()
+        df = conn.execute(f"SELECT * FROM {table_name}").fetchdf()
+        return df
 
-        # print(f"[DEBUG] Colonnes et types de '{table_name}' :")
-
-        # for col in table_info:
-        #     # col est une tuple comme : (column_id, name, type, not_null, default_value, primary_key)
-        #     print(f" - {col[1]} : {col[2]}")
-        # row_count = conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
-        # print(f"[DEBUG] Nombre de lignes dans '{table_name}' : {row_count}")
-
-
-        try:
-            df = conn.execute(f"SELECT * FROM {table_name}").fetchdf()
-            # df = conn.execute(f"SELECT * FROM {table_name}").df()
-            print(df.shape)
-            return df
-        except Exception as e:
-            print(f"Erreur lors de la récupération de la table {table_name} : {e}")
 
     def copy_table_from_staging(self, conn, staging_table_name: str, db_table_name: str):
         """
@@ -297,26 +276,6 @@ class DuckDBPipeline(DataBasePipeline):
             df = staging_conn.execute(f"SELECT * FROM {staging_table_name}").fetchdf()
             staging_conn.close()
 
-            # # Attache de la base Staging
-            # try:
-            #     # Tente de détacher 'staging_db' si elle est déjà attachée
-            #     try:
-            #         conn.execute("DETACH staging_db")
-            #         # conn.execute("DETACH project_db")
-            #     except Exception:
-            #         pass
-
-            #     # Attache proprement la base staging
-            #     conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
-            #     # conn.execute(f"ATTACH '{self.db_path}' AS project_db")
-
-            # except Exception as e:
-            #     self.logger.error(f"Erreur lors de l'ATTACH/DETACH : {e}")
-            # # # print(conn.execute("SHOW ALL TABLES").fetchall())
-            # # print(staging_table_name, db_table_name)
-            # df = conn.execute(f"SELECT * FROM staging_db.{db_table_name}").fetchdf()
-            # print(df.shape)
-            # Coller dans la base cible (suppression de la table avant)
             try:
                 conn.register("staging_data", df)
                 conn.execute(f"""
