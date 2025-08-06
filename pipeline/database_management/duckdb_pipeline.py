@@ -312,15 +312,26 @@ class DuckDBPipeline(DataBasePipeline):
             Nom de la table que l'on "colle". 
         """
         if self.staging_db_config:
+            query_params = {"schema": self.schema, "table": db_table_name}
+
             # Récupération de la table dans Staging
             staging_db_path = Path(self.staging_db_config.get("path"))
 
-            conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
+            try:
+                # Vérifie si le schema 'staging_db' est déjà attaché
+                schemas = [row[0] for row in conn.execute("SHOW SCHEMAS").fetchall()]
+                if 'staging_db' in schemas:
+                    conn.execute("DETACH staging_db")
+                    print("Detached existing staging_db")
+
+                conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
+                print("Attached new staging_db")
+
+            except Exception as e:
+                print(f"Erreur lors de l'ATTACH/DETACH : {e}")
             df = conn.execute(f"SELECT * FROM staging_db.{staging_table_name}").fetchdf()
 
             # Coller dans la base cible (suppression de la table avant)
-            query_params = {"schema": self.schema, "table": db_table_name}
-
             try:
                 if self.is_table_exist(conn, query_params):
                     self.duckdb_drop_table(conn, query_params)
@@ -331,7 +342,6 @@ class DuckDBPipeline(DataBasePipeline):
                     SELECT * FROM df
                 """)
 
-                conn.execute("DETACH staging_db")
                 self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
                 
             except Exception as e:
