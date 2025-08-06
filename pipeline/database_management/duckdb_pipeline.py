@@ -275,33 +275,6 @@ class DuckDBPipeline(DataBasePipeline):
         except Exception as e:
             print(f"Erreur lors de la récupération de la table {table_name} : {e}")
 
-    def duckdb_drop_table(self, conn, query_params: dict):
-        """
-        Supprime une table et les vues qui lui sont liées.
-
-        Parameters
-        ----------
-        conn : sqlalchemy.engine.base.Connection
-            Connexion à la base duckDB.
-        query_params : dict
-            Paramètres à injecter dans la requête SQL.
-        """
-        table_name = query_params['table']
-
-        views = conn.execute("""
-            SELECT table_name, sql
-            FROM duckdb_views()
-            WHERE sql LIKE '%' || ? || '%'
-        """, [table_name]).fetchall()
-        print(views)
-        for (view,) in views:
-            self.logger.info(f"🗑 Vue '{view}' existante → suppression totale (DROP VIEW)")
-            conn.execute(f'DROP VIEW IF EXISTS "{view}"')
-
-        # Suppression de la table
-        self.logger.info(f"🗑 Table '{table_name}' existante → suppression totale (DROP TABLE)")
-        conn.execute(f"DROP TABLE IF EXISTS {table_name}")
-
     def copy_table_from_staging(self, conn, staging_table_name: str, db_table_name: str):
         """
         Copie d'une table de la base Staging vers la base cible.
