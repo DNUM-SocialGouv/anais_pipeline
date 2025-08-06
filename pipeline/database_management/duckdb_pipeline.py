@@ -325,15 +325,15 @@ class DuckDBPipeline(DataBasePipeline):
                 if self.is_table_exist(conn, query_params):
                     self.duckdb_drop_table(conn, query_params)
 
-            # Création de la table dans la base du projet
-            conn.execute(f"""
-                CREATE TABLE IF NOT EXISTS {db_table_name} AS
-                SELECT * FROM df
-            """)
+                # Création de la table dans la base du projet
+                conn.execute(f"""
+                    CREATE TABLE {db_table_name} AS
+                    SELECT * FROM df
+                """)
 
-            conn.execute("DETACH staging_db")
-            self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
-            
+                conn.execute("DETACH staging_db")
+                self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
+                
             except Exception as e:
                 self.logger.error(f"❌ Erreur lors de la copie de la table {db_table_name} provenant de staging : {e}")            
 
