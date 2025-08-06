@@ -258,16 +258,16 @@ class DuckDBPipeline(DataBasePipeline):
         table_info = conn.execute(f"PRAGMA table_info('{table_name}')").fetchall()
 
         print(f"[DEBUG] Colonnes et types de '{table_name}' :")
-        
+
         for col in table_info:
             # col est une tuple comme : (column_id, name, type, not_null, default_value, primary_key)
             print(f" - {col[1]} : {col[2]}")            
-        try:
-            df = conn.execute(f"SELECT * FROM {table_name}").df()
-            print(df.shape)
-            return df
-        except Exception as e:
-            print(f"Erreur lors de la récupération de la table {table_name} : {e}")
+        # try:
+        #     df = conn.execute(f"SELECT * FROM {table_name}").df()
+        #     print(df.shape)
+        #     return df
+        # except Exception as e:
+        #     print(f"Erreur lors de la récupération de la table {table_name} : {e}")
 
     def copy_table_from_staging(self, conn, staging_table_name: str, db_table_name: str):
         """
