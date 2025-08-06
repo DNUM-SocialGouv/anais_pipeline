@@ -320,6 +320,12 @@ class DuckDBPipeline(DataBasePipeline):
 
             # Attache de la base Staging
             try:
+                # Tente de détacher 'staging_db' si elle est déjà attachée
+                try:
+                    conn.execute("DETACH staging_db")
+                except Exception:
+                    pass
+
                 # Attache proprement la base staging
                 conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
 
