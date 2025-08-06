@@ -288,7 +288,7 @@ class DuckDBPipeline(DataBasePipeline):
             # Attache la base Staging
             staging_db_path = Path(self.staging_db_config.get("path"))
             staging_db_schema = self.staging_db_config.get("schema")
-            conn.execute("DETACH staging_db")
+
             conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
             df = conn.execute(f"SELECT * FROM staging_db.sa_siicea_cibles LIMIT 5").fetchdf()
             print(df.shape)
