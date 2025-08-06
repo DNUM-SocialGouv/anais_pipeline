@@ -264,19 +264,6 @@ class DuckDBPipeline(DataBasePipeline):
             Nom de la table que l'on "colle". 
         """
         if self.staging_db_config:
-            # # Attache la base Staging
-            # staging_db_path = Path(self.staging_db_config.get("path"))
-            # staging_db_schema = self.staging_db_config.get("schema")
-
-            # conn.execute(f"ATTACH '{staging_db_path}' AS staging_db")
-
-            # # Crée la table dans la base cible à partir de la table source
-            # conn.execute(f"""
-            #     CREATE TABLE IF NOT EXISTS main.{db_table_name} AS
-            #     SELECT * FROM staging_db.main.{staging_table_name}
-            # """)
-            # conn.execute("DETACH staging_db")
-            # self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
             # Récupération de la table dans Staging
             staging_db_path = Path(self.staging_db_config.get("path"))
             df = duckdb.connect(staging_db_path).execute(
