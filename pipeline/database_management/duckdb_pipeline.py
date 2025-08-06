@@ -294,7 +294,7 @@ class DuckDBPipeline(DataBasePipeline):
             # Crée la table dans la base cible à partir de la table source
             print(staging_db_path)
             conn.execute(f"""
-                CREATE TABLE {db_table_name} AS
+                CREATE TABLE main.{db_table_name} AS
                 SELECT * FROM staging_db.{staging_table_name}
             """)
             # conn.execute("DETACH staging_db")
