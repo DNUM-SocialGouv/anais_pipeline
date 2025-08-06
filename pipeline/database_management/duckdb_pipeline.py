@@ -327,24 +327,34 @@ class DuckDBPipeline(DataBasePipeline):
 
             except Exception as e:
                 self.logger.error(f"Erreur lors de l'ATTACH/DETACH : {e}")
+                return
     
             df = conn.execute(f"SELECT * FROM staging_db.{staging_table_name}").fetchdf()
 
             # Coller dans la base cible (suppression de la table avant)
             try:
+                # Vérifie si la table existe dans staging
+                tables = [row[0] for row in conn.execute("SHOW TABLES FROM staging_db").fetchall()]
+                if staging_table_name not in tables:
+                    self.logger.error(f"❌ La table {staging_table_name} n'existe pas dans la base staging.")
+                    return
+
+                # Lecture
+                df = conn.execute(f"SELECT * FROM staging_db.{staging_table_name}").fetchdf()
+
+                # Suppression si existante
                 if self.is_table_exist(conn, query_params):
                     self.duckdb_drop_table(conn, query_params)
 
-                # Création de la table dans la base du projet
-                conn.execute(f"""
-                    CREATE TABLE {db_table_name} AS
-                    SELECT * FROM df
-                """)
+                # Création de la nouvelle table à partir du DataFrame
+                conn.register("df", df)
+                conn.execute(f"CREATE TABLE {db_table_name} AS SELECT * FROM df")
+                conn.unregister("df")
 
                 self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
-                
+
             except Exception as e:
-                self.logger.error(f"❌ Erreur lors de la copie de la table {db_table_name} provenant de staging : {e}")            
+                self.logger.error(f"❌ Erreur lors de la copie de la table {db_table_name} provenant de staging : {e}")        
 
             # # Récupération de la table dans Staging
             # staging_db_path = Path(self.staging_db_config.get("path"))
