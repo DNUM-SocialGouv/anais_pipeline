@@ -44,12 +44,13 @@ class DuckDBPipeline(DataBasePipeline):
             os.makedirs(db_dir, exist_ok=True)
             self.logger.info(f"Dossier créé pour la base DuckDB : {db_dir}")
 
-        if not os.path.exists(self.db_path):
-            self.logger.info("Création de la base DuckDB...")
-            conn = duckdb.connect(self.db_path)
-            conn.close()
-        else:
-            self.logger.info("La base DuckDB existe déjà.")
+        if os.path.exists(self.db_path):
+            self.logger.info("La base DuckDB existe déjà. Suppression en cours...")
+            os.remove(self.db_path)
+        self.logger.info("Création de la base DuckDB...")
+        conn = duckdb.connect(self.db_path)
+        conn.close()
+
 
     def connect(self):
         """ Connexion à la base DuckDB. """
@@ -335,8 +336,8 @@ class DuckDBPipeline(DataBasePipeline):
 
             # Coller dans la base cible (suppression de la table avant)
             try:
-                if self.is_table_exist(conn, query_params):
-                    self.duckdb_drop_table(conn, query_params)
+                # if self.is_table_exist(conn, query_params):
+                #     self.duckdb_drop_table(conn, query_params)
 
                 # Création de la table dans la base du projet
                 conn.execute(f"""
