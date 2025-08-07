@@ -371,7 +371,7 @@ class ColumnsManagement(StandardizeColnames):
                     elif self.type_mapping[col_type] == "datetime64":
                         self.df[col_name] = pd.to_datetime(self.df[col_name], format="%d-%m-%Y", errors="coerce")
                     elif self.type_mapping[col_type] == "string":
-                        self.df[col_name] = self.df[col_name].astype(self.type_mapping[col_type])
+                        self.df[col_name] = self.df[col_name].astype(self.type_mapping[col_type]).fillna('')
                         if not pd.isna(col_length):
                             self.df[col_name] = self.df[col_name].str[:col_length]
                     else:
@@ -461,10 +461,8 @@ class TableInCsv:
 
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         try:
-            print(output_path)
             # Exportation
             df = self.df_fetch_func(self.conn, self.table_name)
-            print(self.table_name, df)
             
             df.to_csv(output_path, index=False, sep=";", encoding="utf-8-sig")
             self.logger.info(f"✅ Export réussi : {file_name}")
