@@ -106,14 +106,14 @@ class PostgreSQLLoader(DataBasePipeline):
         query_params : dict
             Paramètres à injecter dans la requête SQL.
         """
-        trans = conn.begin()
+        # trans = conn.begin()
         try:
             # if self.is_table_exist(conn, query_params):
             #     self.postgres_drop_table(conn, query_params)
             conn.execute(text(sql_query))
-            trans.commit()
+            # trans.commit()
         except Exception as e:
-            trans.rollback()
+            # trans.rollback()
             self.logger.error(f"❌ Erreur lors de l'exécution : {e}")
             raise
 
@@ -316,17 +316,17 @@ class PostgreSQLLoader(DataBasePipeline):
 
             # Coller dans la base cible (suppression de la table avant)
             query_params = {"schema": self.schema, "table": db_table_name}
-            trans = conn.begin()
+            # trans = conn.begin()
 
             try:
                 if self.is_table_exist(conn, query_params):
                     self.postgres_drop_table(conn, query_params)
-                trans.commit()
+                # trans.commit()
                 
                 df.to_sql(db_table_name, engine_target, if_exists='replace', index=False, schema=self.schema)
                 self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base {staging_db_config["dbname"]} vers la base {self.db_name} sous le nom {db_table_name}.")
             except Exception as e:
-                trans.rollback()
+                # trans.rollback()
                 self.logger.error(f"❌ Erreur lors de l'exécution : {e}")
                 raise
         else:
