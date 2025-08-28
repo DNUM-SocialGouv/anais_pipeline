@@ -330,7 +330,7 @@ class DuckDBPipeline(DataBasePipeline):
         conn.execute(query)
         self.logger.info(f"✅ Données de {source} ajoutées à {target}")
 
-    def truncate_table(self, conn, query_params: dict):
+    def truncate_table(self, conn, table_name: str):
         """
         Vide une table dans la base duckDB.
 
@@ -338,10 +338,9 @@ class DuckDBPipeline(DataBasePipeline):
         ----------
         conn : duckdb.DuckDBPyConnection
             Connexion à la base DuckDB.
-        query_params : dict
-            Paramètres à injecter dans la requête SQL.
+        table_name : str
+            Nom de la table à vider.
         """
-        table_name = query_params['table']
         conn.execute(f"TRUNCATE TABLE {table_name}")
 
     def historise_table(self, conn, query_params: dict):

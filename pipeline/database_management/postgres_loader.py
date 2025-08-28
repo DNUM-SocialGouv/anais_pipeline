@@ -386,7 +386,6 @@ class PostgreSQLLoader(DataBasePipeline):
         table_name : str
             Nom de la table à vider.
         """
-        table_name = query_params['table']
         conn.execute(f'TRUNCATE TABLE "{table_name}" RESTART IDENTITY CASCADE;')
 
     def historise_table(self, conn, query_params: dict):
