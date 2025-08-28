@@ -44,16 +44,16 @@ class DuckDBPipeline(DataBasePipeline):
             os.makedirs(db_dir, exist_ok=True)
             self.logger.info(f"Dossier créé pour la base DuckDB : {db_dir}")
 
-        if os.path.exists(self.db_path):
-            self.logger.info("La base DuckDB existe déjà. Suppression en cours...")
-            os.remove(self.db_path)
-        self.logger.info("Création de la base DuckDB...")
-        conn = duckdb.connect(self.db_path)
-        conn.close()
-
+        if not os.path.exists(self.db_path):
+            # self.logger.info("La base DuckDB existe déjà. Suppression en cours...")
+            # os.remove(self.db_path)
+            self.logger.info("Création de la base DuckDB.")
+            conn = duckdb.connect(self.db_path)
+            conn.close()
 
     def connect(self):
         """ Connexion à la base DuckDB. """
+        self.logger.info("Connexion à la base DuckDB.")
         self.conn = duckdb.connect(database=self.db_path)
 
     def is_duckdb_empty(self) -> bool:
@@ -290,6 +290,85 @@ class DuckDBPipeline(DataBasePipeline):
 
         else:
             self.logger.error("❌ La configuration de la base Staging n'a pas été indiquée.")
+
+    def copy_table_into_new(self, conn, source: str, target: str):
+        """
+        Copie une table dans une nouvelle.
+
+        Parameters
+        ----------
+        conn : duckdb.DuckDBPyConnection
+            Connexion à la base de données.
+        source : str
+            Nom de la table que l'on "copie".
+        target : str
+            Nom de la table à laquelle on ajoute les données de la première.
+        """
+        query = f"CREATE TABLE {target} AS SELECT * FROM {source}"
+        conn.execute(query)
+        self.logger.info(f"✅ Table {source} copiée vers {target}")
+
+    def append_table(self, conn, source: str, target: str):
+        """
+        Ajoute les données de la table source à la table target.
+        Les deux tables doivent avoir la même structure (mêmes colonnes et types).
+
+        Parameters
+        ----------
+        conn : duckdb.DuckDBPyConnection
+            Connexion à la base de données.
+        source : str
+            Nom de la table que l'on "copie".
+        target : str
+            Nom de la table à laquelle on ajoute les données de la première. 
+
+        """
+        query = f"""
+            INSERT INTO {target}
+            SELECT * FROM {source}
+        """
+        conn.execute(query)
+        self.logger.info(f"✅ Données de {source} ajoutées à {target}")
+
+    def truncate_table(self, conn, query_params: dict):
+        """
+        Vide une table dans la base duckDB.
+
+        Parameters
+        ----------
+        conn : duckdb.DuckDBPyConnection
+            Connexion à la base DuckDB.
+        query_params : dict
+            Paramètres à injecter dans la requête SQL.
+        """
+        table_name = query_params['table']
+        conn.execute(f"TRUNCATE TABLE {table_name}")
+
+    def historise_table(self, conn, query_params: dict):
+        """
+        Historise les données d'une table. Copie le contenue de la table dans la ztable, puis vide la table.
+
+        Parameters
+        ----------
+        conn : duckdb.DuckDBPyConnection
+            Connexion à la base de données.
+        query_params : dict
+            Paramètres à injecter dans la requête SQL.
+        """
+        table_name = query_params["table"]
+        target_name = f"z{table_name}"
+        query_params_histo = query_params.copy()
+        query_params_histo['table'] = target_name
+
+        try:
+            if not self.is_table_exist(conn, query_params_histo):
+                self.copy_table_into_new(trans, table_name, target_name)
+            else:
+                self.append_table(trans, table_name, target_name)
+                self.truncate_table(trans, table_name)
+        except Exception as e:
+            self.logger.error(f"❌ Erreur lors de l'historisation : {e}")
+            raise
 
     def close(self):
         """ Ferme la connexion à la base de données Duckdb. """

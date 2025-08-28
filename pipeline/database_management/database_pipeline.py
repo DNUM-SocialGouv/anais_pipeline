@@ -109,8 +109,6 @@ class DataBasePipeline:
         ----------
         conn : sqlalchemy.engine.base.Connection | duckdb.DuckDBPyConnection
             Connexion à la base de données.
-        table_name : str
-            Nom de la table à vérifier.
         query_params : dict
             Paramètres à injecter dans la requête SQL.
         print_table : bool, optional
@@ -141,9 +139,9 @@ class DataBasePipeline:
             self.logger.error(f"❌ Erreur lors de la vérification de la table '{query_params["table"]}' → {e}")
             return False
 
-    def execute_sql_file(self, conn, sql_file: Path, create_table_func: Callable[[Any, str, dict], None]):
+    def execute_sql_file(self, conn, sql_file: Path):
         """
-        Exécute un fichier SQL Create Table.
+        Exécute un fichier SQL Create Table, si la table n'existe pas. Sinon historise la table etcopie les données dans une table d'historique.
 
         Parameters
         ----------
@@ -164,8 +162,14 @@ class DataBasePipeline:
             query_params = {"schema": self.schema, "table": table_name}
 
             try:
-                create_table_func(conn, sql, query_params)
-                self.logger.info(f"✅ Table créée avec succès : {sql_file.name}")
+                # Si la table existe déjà, elle est historisée
+                if not self.is_table_exist(conn, query_params):
+                    self.historise_table(conn, query_params)
+                    self.logger.info(f"✅ Table {table_name} historisée avec succès")
+                # Si la table n'existe pas, elle est créée
+                else:
+                    self.create_table(conn, sql, query_params)
+                    self.logger.info(f"✅ Table créée avec succès : {sql_file.name}")
             except Exception as e:
                 self.logger.error(f"❌ Erreur lors de l'exécution du SQL {sql_file.name}: {e}")
 
@@ -184,6 +188,28 @@ class DataBasePipeline:
             else:
                 self.logger.warning("⚠️ Aucune table spécifiée")
 
+    def append_table(self, conn, source: str, target: str):
+        """
+        Ajoute les données de la table source à la table target.
+        Les deux tables doivent avoir la même structure (mêmes colonnes et types).
+
+        Parameters
+        ----------
+        conn : duckdb.DuckDBPyConnection
+            Connexion à la base de données.
+        source : str
+            Nom de la table que l'on "copie".
+        target : str
+            Nom de la table à laquelle on ajoute les données de la première. 
+
+        """
+        query = f"""
+            INSERT INTO {target}
+            SELECT * FROM {source}
+        """
+        conn.execute(query)
+        self.logger.info(f"✅ Données de {source} ajoutées à {target}")
+        
     def import_csv(self, views_to_import: dict):
         """
         Importe les vues vers un format csv.
@@ -229,7 +255,7 @@ class DataBasePipeline:
         """
         conn = self.conn
         for sql_file in Path(self.sql_folder).glob("*.sql"):
-            self.execute_sql_file(conn, sql_file, self.create_table)
+            self.execute_sql_file(conn, sql_file)
 
         self.logger.info(f"Début du chargement des fichiers CSV vers {self.typedb}.")
         for csv_file in Path(self.csv_folder_input).glob("*.csv"):
