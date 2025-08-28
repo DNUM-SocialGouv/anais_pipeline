@@ -350,8 +350,9 @@ class PostgreSQLLoader(DataBasePipeline):
         #     target=sql.Identifier(target),
         #     source=sql.Identifier(source)
         # )
-        query = f"CREATE TABLE {target} AS TABLE {source} WITH DATA"
+        query = text(f"CREATE TABLE {target} AS TABLE {source} WITH DATA")
         conn.execute(query)
+        self.logger.info(f"✅ Table historique {target} créée à partir de {target}")
 
     def append_table(self, conn, source: str, target: str):
         """
