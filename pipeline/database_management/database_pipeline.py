@@ -188,28 +188,6 @@ class DataBasePipeline:
             else:
                 self.logger.warning("⚠️ Aucune table spécifiée")
 
-    def append_table(self, conn, source: str, target: str):
-        """
-        Ajoute les données de la table source à la table target.
-        Les deux tables doivent avoir la même structure (mêmes colonnes et types).
-
-        Parameters
-        ----------
-        conn : duckdb.DuckDBPyConnection
-            Connexion à la base de données.
-        source : str
-            Nom de la table que l'on "copie".
-        target : str
-            Nom de la table à laquelle on ajoute les données de la première. 
-
-        """
-        query = f"""
-            INSERT INTO {target}
-            SELECT * FROM {source}
-        """
-        conn.execute(query)
-        self.logger.info(f"✅ Données de {source} ajoutées à {target}")
-
     def import_csv(self, views_to_import: dict):
         """
         Importe les vues vers un format csv.
