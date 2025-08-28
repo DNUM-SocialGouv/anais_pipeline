@@ -243,3 +243,7 @@ class DataBasePipeline:
         for csv_file in Path(self.csv_folder_input).glob("*.csv"):
             query_params = {"schema": self.schema, "table": csv_file.stem}
             self.check_table(conn, query_params, print_table=False, show_row_count = True)
+
+            # Vérification des données l'historique
+            query_params = {"schema": self.schema, "table": f"z{csv_file.stem}"}
+            self.check_table(conn, query_params, print_table=False, show_row_count = True)
