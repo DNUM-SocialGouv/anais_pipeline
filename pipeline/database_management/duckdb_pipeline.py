@@ -362,10 +362,10 @@ class DuckDBPipeline(DataBasePipeline):
 
         try:
             if not self.is_table_exist(conn, query_params_histo):
-                self.copy_table_into_new(trans, table_name, target_name)
+                self.copy_table_into_new(conn, table_name, target_name)
             else:
-                self.append_table(trans, table_name, target_name)
-                self.truncate_table(trans, table_name)
+                self.append_table(conn, table_name, target_name)
+                self.truncate_table(conn, table_name)
         except Exception as e:
             self.logger.error(f"❌ Erreur lors de l'historisation : {e}")
             raise

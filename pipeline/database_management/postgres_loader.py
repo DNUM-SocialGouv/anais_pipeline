@@ -344,16 +344,14 @@ class PostgreSQLLoader(DataBasePipeline):
             Nom de la table que l'on "copie".
         target : str
             Nom de la table à laquelle on ajoute les données de la première. 
+
         """
-        trans = conn.begin()      
-        try:
-            query = f"CREATE TABLE {target} AS TABLE {source} WITH DATA"
-            trans.execute(query)
-            trans.commit()
-        except Exception as e:
-            trans.rollback()
-            self.logger.error(f"❌ Erreur lors de l'historisation : {e}")
-            raise
+        # query = sql.SQL("CREATE TABLE {target} AS TABLE {source}").format(
+        #     target=sql.Identifier(target),
+        #     source=sql.Identifier(source)
+        # )
+        query = f"CREATE TABLE {target} AS TABLE {source} WITH DATA""
+        conn.execute(query)
 
     def append_table(self, conn, source: str, target: str):
         """
@@ -368,20 +366,15 @@ class PostgreSQLLoader(DataBasePipeline):
             Nom de la table que l'on "copie".
         target : str
             Nom de la table à laquelle on ajoute les données de la première. 
+
         """
-        trans = conn.begin()      
-        try:
-            query = f"""
-                INSERT INTO {target}
-                SELECT * FROM {source}
-            """
-            conn.execute(query)
-            self.logger.info(f"✅ Données de {source} ajoutées à {target}")
-        except Exception as e:
-            trans.rollback()
-            self.logger.error(f"❌ Erreur lors de l'historisation : {e}")
-            raise
-     
+        query = f"""
+            INSERT INTO {target}
+            SELECT * FROM {source}
+        """
+        conn.execute(query)
+        self.logger.info(f"✅ Données de {source} ajoutées à {target}")
+        
     def truncate_table(self, conn, table_name: str):
         """
         Vide une table dans la base duckDB.
@@ -393,14 +386,8 @@ class PostgreSQLLoader(DataBasePipeline):
         table_name : str
             Nom de la table à vider.
         """
-        trans = conn.begin()      
-        try:
-            table_name = query_params['table']
-            conn.execute(f'TRUNCATE TABLE "{table_name}" RESTART IDENTITY CASCADE;')
-        except Exception as e:
-            trans.rollback()
-            self.logger.error(f"❌ Erreur lors de l'historisation : {e}")
-            raise
+        table_name = query_params['table']
+        conn.execute(f'TRUNCATE TABLE "{table_name}" RESTART IDENTITY CASCADE;')
 
     def historise_table(self, conn, query_params: dict):
         """
@@ -418,11 +405,18 @@ class PostgreSQLLoader(DataBasePipeline):
         query_params_histo = query_params.copy()
         query_params_histo['table'] = target_name
 
-        if not self.is_table_exist(conn, query_params_histo):
-            self.copy_table_into_new(conn, table_name, target_name)
-        else:
-            self.append_table(conn, table_name, target_name)
-            self.truncate_table(conn, table_name)
+        trans = conn.begin()      
+        try:
+            if not self.is_table_exist(conn, query_params_histo):
+                self.copy_table_into_new(trans, table_name, target_name)
+            else:
+                self.append_table(trans, table_name, target_name)
+                self.truncate_table(trans, table_name)
+            trans.commit()
+        except Exception as e:
+            trans.rollback()
+            self.logger.error(f"❌ Erreur lors de l'historisation : {e}")
+            raise
 
     def close(self):
         """Ferme la connexion à la base de données postgres."""
