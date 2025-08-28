@@ -163,7 +163,7 @@ class DataBasePipeline:
 
             try:
                 # Si la table existe déjà, elle est historisée
-                if not self.is_table_exist(conn, query_params):
+                if self.is_table_exist(conn, query_params):
                     self.historise_table(conn, query_params)
                     self.logger.info(f"✅ Table {table_name} historisée avec succès")
                 # Si la table n'existe pas, elle est créée
@@ -209,7 +209,7 @@ class DataBasePipeline:
         """
         conn.execute(query)
         self.logger.info(f"✅ Données de {source} ajoutées à {target}")
-        
+
     def import_csv(self, views_to_import: dict):
         """
         Importe les vues vers un format csv.
