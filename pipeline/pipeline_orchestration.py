@@ -30,11 +30,11 @@ def anais_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
     logger : Logger
         Fichier de log.
     """
-    # # Initialisation de la config postgres
-    # pg_loader = PostgreSQLLoader(
-    #     db_config=db_config,
-    #     config=config,
-    #     logger=logger)
+    # Initialisation de la config postgres
+    pg_loader = PostgreSQLLoader(
+        db_config=db_config,
+        config=config,
+        logger=logger)
 
     # # Récupération des fichiers sur le sftp
     # sftp = SFTPSync(config["local_directory_input"], logger)
@@ -74,11 +74,11 @@ def local_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
     logger : Logger
         Fichier de log.
     """
-    # # Initialisation de la config DuckDB
-    # loader = DuckDBPipeline(
-    #     db_config=db_config,
-    #     config=config,
-    #     logger=logger)
+    # Initialisation de la config DuckDB
+    loader = DuckDBPipeline(
+        db_config=db_config,
+        config=config,
+        logger=logger)
 
     # # Remplissage des tables de la base DuckDB
     # loader.connect()
