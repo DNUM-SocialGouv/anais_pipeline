@@ -389,6 +389,7 @@ class PostgreSQLLoader(DataBasePipeline):
         column_name : str
             Nom de la colonne date.
         """
+        tz = "Europe/Paris"
         conn.execute(text(f'ALTER TABLE "{table_name}" ADD COLUMN {column_name} TIMESTAMP'))
         conn.execute(text(f'UPDATE "{table_name}" SET {column_name} = CURRENT_TIMESTAMP AT TIME ZONE "{tz}"'))
 
