@@ -330,6 +330,24 @@ class DuckDBPipeline(DataBasePipeline):
         conn.execute(query)
         self.logger.info(f"✅ Données de {source} ajoutées à {target}")
 
+    def add_current_date_if_not_exist(self, conn, table_name: str, column_name: str):
+        """
+        Ajoute la date du jour (date d'historisation) à une table.
+
+        Parameters
+        ----------
+        conn : duckdb.DuckDBPyConnection
+            Connexion à la base DuckDB.
+        table_name : str
+            Nom de la table à vider.
+        column_name : str
+            Nom de la colonne date.
+        """
+        conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN date_historisation DATE')
+
+    # def add_date_if_exist(self, conn, table_name: str):
+    #     conn.execute(f'UPDATE "{table_name}" SET date_historisation = CURRENT_DATE')
+
     def truncate_table(self, conn, table_name: str):
         """
         Vide une table dans la base duckDB.
@@ -361,8 +379,10 @@ class DuckDBPipeline(DataBasePipeline):
 
         try:
             if not self.is_table_exist(conn, query_params_histo) and self.is_table_exist(conn, query_params):
+                self.add_date_if_not_exist(conn, table_name) # Ajout de la date du jour dans la table actuel -> envoyer dans l'historique
                 self.copy_table_into_new(conn, table_name, target_name)
             elif self.is_table_exist(conn, query_params_histo) and self.is_table_exist(conn, query_params):
+                self.add_date_if_not_exist(conn, table_name) # Ajout de la date du jour dans la table actuel -> envoyer dans l'historique
                 self.append_table(conn, table_name, target_name)
             self.truncate_table(conn, table_name)
         except Exception as e:
