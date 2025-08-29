@@ -420,7 +420,8 @@ class PostgreSQLLoader(DataBasePipeline):
         query_params_histo = query_params.copy()
         query_params_histo['table'] = target_name
 
-        # trans = conn.begin()      
+        # trans = conn.begin()
+        try: 
             if not self.is_table_exist(conn, query_params_histo) and self.is_table_exist(conn, query_params):
                 self.add_date_if_not_exist(conn, table_name, "date_historisation") # Ajout de la date du jour dans la table actuel -> envoyer dans l'historique
                 self.copy_table_into_new(conn, table_name, target_name)
