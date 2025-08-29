@@ -364,7 +364,7 @@ class DuckDBPipeline(DataBasePipeline):
                 self.copy_table_into_new(conn, table_name, target_name)
             else:
                 self.append_table(conn, table_name, target_name)
-                self.truncate_table(conn, table_name)
+            self.truncate_table(conn, table_name)
         except Exception as e:
             self.logger.error(f"❌ Erreur lors de l'historisation : {e}")
             raise

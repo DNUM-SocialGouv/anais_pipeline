@@ -352,7 +352,7 @@ class PostgreSQLLoader(DataBasePipeline):
         # )
         query = text(f"CREATE TABLE {target} AS TABLE {source} WITH DATA")
         conn.execute(query)
-        self.logger.info(f"✅ Table historique {target} créée à partir de {target}")
+        self.logger.info(f"✅ Table historique {target} créée à partir de {source}")
 
     def append_table(self, conn, source: str, target: str):
         """
@@ -411,7 +411,7 @@ class PostgreSQLLoader(DataBasePipeline):
                 self.copy_table_into_new(conn, table_name, target_name)
             else:
                 self.append_table(conn, table_name, target_name)
-                self.truncate_table(conn, table_name)
+            self.truncate_table(conn, table_name)
             # trans.commit()
         except Exception as e:
             # trans.rollback()
