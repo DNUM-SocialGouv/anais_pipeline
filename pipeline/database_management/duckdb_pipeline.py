@@ -360,9 +360,9 @@ class DuckDBPipeline(DataBasePipeline):
         query_params_histo['table'] = target_name
 
         try:
-            if not self.is_table_exist(conn, query_params_histo):
+            if not self.is_table_exist(conn, query_params_histo) and self.is_table_exist(conn, query_params):
                 self.copy_table_into_new(conn, table_name, target_name)
-            else:
+            elif self.is_table_exist(conn, query_params_histo) and self.is_table_exist(conn, query_params):
                 self.append_table(conn, table_name, target_name)
             self.truncate_table(conn, table_name)
         except Exception as e:
