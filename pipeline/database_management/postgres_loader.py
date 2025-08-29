@@ -407,7 +407,7 @@ class PostgreSQLLoader(DataBasePipeline):
 
         # trans = conn.begin()      
         try:
-            if not self.is_table_exist(conn, query_params_histo):
+            if not self.is_table_exist(conn, query_params_histo) and self.is_table_exist(conn, query_params):
                 self.copy_table_into_new(conn, table_name, target_name)
             else:
                 self.append_table(conn, table_name, target_name)
