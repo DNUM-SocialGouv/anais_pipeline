@@ -188,6 +188,36 @@ class DataBasePipeline:
             else:
                 self.logger.warning("⚠️ Aucune table spécifiée")
 
+    def historise_table(self, conn, query_params: dict):
+        """
+        Historise les données d'une table. Copie le contenue de la table dans la ztable, puis vide la table.
+
+        Parameters
+        ----------
+        conn : sqlalchemy.engine.base.Connection | duckdb.DuckDBPyConnection
+            Connexion à la base de données.
+        query_params : dict
+            Paramètres à injecter dans la requête SQL.
+        """
+        table_name = query_params["table"]
+        target_name = f"z{table_name}"
+        query_params_histo = query_params.copy()
+        query_params_histo['table'] = target_name
+
+        try: 
+            self.add_current_date_if_not_exist(conn, table_name, "date_historisation") # Ajout de la date du jour dans la table actuel -> envoyer dans l'historique
+
+            if not self.is_table_exist(conn, query_params_histo) and self.is_table_exist(conn, query_params):
+                self.copy_table_into_new(conn, table_name, target_name)
+            elif self.is_table_exist(conn, query_params_histo) and self.is_table_exist(conn, query_params):
+                self.append_table(conn, table_name, target_name)
+            self.drop_column(conn, table_name, "date_historisation")
+            self.truncate_table(conn, table_name)
+
+        except Exception as e:
+            self.logger.error(f"❌ Erreur lors de l'historisation : {e}")
+            raise
+
     def import_csv(self, views_to_import: dict):
         """
         Importe les vues vers un format csv.

@@ -343,10 +343,23 @@ class DuckDBPipeline(DataBasePipeline):
         column_name : str
             Nom de la colonne date.
         """
-        conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN date_historisation DATE')
+        conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN date_historisation TIMESTAMP')
 
-    # def add_date_if_exist(self, conn, table_name: str):
-    #     conn.execute(f'UPDATE "{table_name}" SET date_historisation = CURRENT_DATE')
+    def drop_column(self, conn, table_name: str, column_name: str):
+        """
+        Supprime une colonne d'une table dans une base Postgres.
+
+        Parameters
+        ----------
+        conn : duckdb.DuckDBPyConnection
+            Connexion à la base Postgres.
+        table_name : str
+            Nom de la table.
+        column_name : str
+            Nom de la colonne à supprimer.
+        """
+        query = f'ALTER TABLE "{table_name}" DROP COLUMN "{column_name}"'
+        conn.execute(query)
 
     def truncate_table(self, conn, table_name: str):
         """
@@ -360,34 +373,6 @@ class DuckDBPipeline(DataBasePipeline):
             Nom de la table à vider.
         """
         conn.execute(f"TRUNCATE TABLE {table_name}")
-
-    def historise_table(self, conn, query_params: dict):
-        """
-        Historise les données d'une table. Copie le contenue de la table dans la ztable, puis vide la table.
-
-        Parameters
-        ----------
-        conn : duckdb.DuckDBPyConnection
-            Connexion à la base de données.
-        query_params : dict
-            Paramètres à injecter dans la requête SQL.
-        """
-        table_name = query_params["table"]
-        target_name = f"z{table_name}"
-        query_params_histo = query_params.copy()
-        query_params_histo['table'] = target_name
-
-        try:
-            if not self.is_table_exist(conn, query_params_histo) and self.is_table_exist(conn, query_params):
-                self.add_current_date_if_not_exist(conn, table_name, "date_historisation") # Ajout de la date du jour dans la table actuel -> envoyer dans l'historique
-                self.copy_table_into_new(conn, table_name, target_name)
-            elif self.is_table_exist(conn, query_params_histo) and self.is_table_exist(conn, query_params):
-                self.add_current_date_if_not_exist(conn, table_name, "date_historisation") # Ajout de la date du jour dans la table actuel -> envoyer dans l'historique
-                self.append_table(conn, table_name, target_name)
-            self.truncate_table(conn, table_name)
-        except Exception as e:
-            self.logger.error(f"❌ Erreur lors de l'historisation : {e}")
-            raise
 
     def close(self):
         """ Ferme la connexion à la base de données Duckdb. """
