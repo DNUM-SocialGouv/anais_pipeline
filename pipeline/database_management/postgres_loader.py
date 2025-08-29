@@ -449,16 +449,13 @@ class PostgreSQLLoader(DataBasePipeline):
             return
 
         # Suppression des tables
-        trans = conn.begin()
-
         try:
             for table in tables:
                 query_params = {"schema": schema, "table": table}
                 self.postgres_drop_table(conn, query_params)
                 self.logger.info(f"✅ Table {schema}.{table} supprimée")
-            trans.commit()
+            conn.commit()
         except Exception as e:
-            trans.rollback()
             self.logger.error(f"❌ Erreur lors de la réinitialisation de l'historique : {e}")
             raise
 
