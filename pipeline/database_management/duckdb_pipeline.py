@@ -426,13 +426,13 @@ class DuckDBPipeline(DataBasePipeline):
         schema = self.schema
 
         # Récupération des tables
-        query = text("""
+        query = f"""
             SELECT table_name
             FROM information_schema.tables
-            WHERE table_schema = :schema
+            WHERE table_schema = ?
             AND table_name LIKE 'z%';
-        """)
-        tables = [row[0] for row in conn.execute(query, {"schema": schema}).fetchall()]
+        """
+        tables = [row[0] for row in conn.execute(query, [schema]).fetchall()]
 
         if not tables:
             self.logger.info(f"Aucune table 'z%' trouvée dans le schéma {schema}")
