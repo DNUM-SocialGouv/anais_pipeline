@@ -418,7 +418,8 @@ class PostgreSQLLoader(DataBasePipeline):
         table_name : str
             Nom de la table à vider.
         """
-        conn.execute(f'TRUNCATE TABLE "{table_name}" RESTART IDENTITY CASCADE;')
+        query = text(f'TRUNCATE TABLE "{table_name}" RESTART IDENTITY CASCADE;')
+        conn.execute(query)
 
     def close(self):
         """Ferme la connexion à la base de données postgres."""
