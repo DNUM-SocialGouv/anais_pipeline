@@ -390,7 +390,7 @@ class PostgreSQLLoader(DataBasePipeline):
             Nom de la colonne date.
         """
         conn.execute(text(f'ALTER TABLE "{table_name}" ADD COLUMN {column_name} TIMESTAMP'))
-        conn.execute(text(f'UPDATE "{table_name}" SET {column_name} = CURRENT_TIMESTAMP'))
+        conn.execute(text(f'UPDATE "{table_name}" SET {column_name} = CURRENT_TIMESTAMP AT TIME ZONE "{tz}"'))
 
 
     def drop_column(self, conn, table_name: str, column_name: str):
