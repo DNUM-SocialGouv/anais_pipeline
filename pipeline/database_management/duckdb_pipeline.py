@@ -345,7 +345,10 @@ class DuckDBPipeline(DataBasePipeline):
         """
         tz = "Europe/Paris"
         conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN date_historisation TIMESTAMP')
-        conn.execute(f'UPDATE "{table_name}" SET {column_name} = CURRENT_TIMESTAMP AT TIME ZONE "{tz}"')
+        conn.execute(f'''
+            UPDATE "{table_name}"
+            SET {column_name} = CURRENT_TIMESTAMP AT TIME ZONE '{tz}'
+        ''')
 
     def drop_column(self, conn, table_name: str, column_name: str):
         """
@@ -376,6 +379,75 @@ class DuckDBPipeline(DataBasePipeline):
         """
         conn.execute(f"TRUNCATE TABLE {table_name}")
 
+    def duckdb_drop_table(self, conn, query_params: dict):
+        """
+        Supprime une table et les vues qui lui sont liées dans DuckDB.
+
+        Parameters
+        ----------
+        conn : duckdb.DuckDBPyConnection
+            Connexion à la base DuckDB.
+        query_params : dict
+            Paramètres à injecter dans la requête SQL.
+            - "table": nom de la table
+            - "schema": nom du schéma (par défaut 'main' dans DuckDB)
+        """
+        schema = query_params["schema"]
+        table_name = query_params["table"]
+
+        # Vérification des vues dépendantes
+        views = conn.execute(f"""
+            SELECT table_schema, table_name
+            FROM information_schema.views
+            WHERE table_schema = '{schema}'
+            AND view_definition ILIKE '%{table_name}%'
+        """).fetchall()
+
+        for view_schema, view in views:
+            self.logger.info(f"🗑 Vue '{view_schema}.{view}' → suppression totale (DROP VIEW)")
+            conn.execute(f'DROP VIEW IF EXISTS "{view_schema}"."{view}"')
+
+        # Suppression de la table
+        self.logger.info(f"🗑 Table '{schema}.{table_name}' → suppression totale (DROP TABLE)")
+        conn.execute(f'DROP TABLE IF EXISTS "{schema}"."{table_name}"')
+
+    def reset_histo(self):
+        """
+        Supprime l'ensemble des tables historiques.
+
+        Parameters
+        ----------
+        conn : sqlalchemy.engine.base.Connection
+            Connexion à la base DuckDB.
+        schema : str
+            Nom du schema postgres de l'historique à supprimer.
+        """
+        conn = self.conn
+        schema = self.schema
+
+        # Récupération des tables
+        query = text("""
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = :schema
+            AND table_name LIKE 'z%';
+        """)
+        tables = [row[0] for row in conn.execute(query, {"schema": schema}).fetchall()]
+
+        if not tables:
+            self.logger.info(f"Aucune table 'z%' trouvée dans le schéma {schema}")
+            return
+
+        # Suppression des tables
+        try:
+            for table in tables:
+                query_params = {"schema": schema, "table": table}
+                self.duckdb_drop_table(conn, query_params)
+                self.logger.info(f"✅ Table {schema}.{table} supprimée")
+        except Exception as e:
+            self.logger.error(f"❌ Erreur lors de la réinitialisation de l'historique : {e}")
+            raise
+    
     def close(self):
         """ Ferme la connexion à la base de données Duckdb. """
         self.conn.close()

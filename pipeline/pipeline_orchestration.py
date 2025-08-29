@@ -30,23 +30,29 @@ def anais_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
     logger : Logger
         Fichier de log.
     """
-    # Initialisation de la config postgres
-    pg_loader = PostgreSQLLoader(
-        db_config=db_config,
-        config=config,
-        logger=logger)
+    # # Initialisation de la config postgres
+    # pg_loader = PostgreSQLLoader(
+    #     db_config=db_config,
+    #     config=config,
+    #     logger=logger)
 
-    # Récupération des fichiers sur le sftp
-    sftp = SFTPSync(config["local_directory_input"], logger)
-    sftp.download_all(config["files_to_download"])
+    # # Récupération des fichiers sur le sftp
+    # sftp = SFTPSync(config["local_directory_input"], logger)
+    # sftp.download_all(config["files_to_download"])
 
-    # Remplissage des tables de la base postgres
+    # # Remplissage des tables de la base postgres
+    # pg_loader.connect()
+    # pg_loader.run()
+    # pg_loader.close()
+
+    # # Création des vues et export
+    # run_dbt(profile, "anais", config["models_directory"], ".", logger, install_deps=False)
+
+    # Réinitialisation de l'historique /!\ Seulement à activer si besoin
     pg_loader.connect()
-    pg_loader.run()
+    pg_loader.reset_histo()
     pg_loader.close()
 
-    # Création des vues et export
-    run_dbt(profile, "anais", config["models_directory"], ".", logger, install_deps=False)
 
 
 def local_staging_pipeline(profile: str, config: dict, db_config: dict, logger: Logger):
@@ -68,36 +74,41 @@ def local_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
     logger : Logger
         Fichier de log.
     """
-    # Initialisation de la config DuckDB
-    loader = DuckDBPipeline(
-        db_config=db_config,
-        config=config,
-        logger=logger)
+    # # Initialisation de la config DuckDB
+    # loader = DuckDBPipeline(
+    #     db_config=db_config,
+    #     config=config,
+    #     logger=logger)
 
-    # Remplissage des tables de la base DuckDB
-    loader.connect()
-    try:
-        # Si la base duckDB Staging existe
-        if os.listdir(config["local_directory_input"]) and os.listdir(config["create_table_directory"]):
-            loader.run()
+    # # Remplissage des tables de la base DuckDB
+    # loader.connect()
+    # try:
+    #     # Si la base duckDB Staging existe
+    #     if os.listdir(config["local_directory_input"]) and os.listdir(config["create_table_directory"]):
+    #         loader.run()
             
-        else:
-            logger.error(
-            "❌ Aucun moyen de remplir la base DuckDB n'a été trouvé.\n"
-            f"- Répertoires vides :\n"
-            f"    > .csv : {config['local_directory_input']}\n"
-            f"    > .sql : {config['create_table_directory']}"
-        )
-    finally:
-        duckdb_empty = loader.is_duckdb_empty()
-        loader.close()
+    #     else:
+    #         logger.error(
+    #         "❌ Aucun moyen de remplir la base DuckDB n'a été trouvé.\n"
+    #         f"- Répertoires vides :\n"
+    #         f"    > .csv : {config['local_directory_input']}\n"
+    #         f"    > .sql : {config['create_table_directory']}"
+    #     )
+    # finally:
+    #     duckdb_empty = loader.is_duckdb_empty()
+    #     loader.close()
 
-    # Vérifie si la base DuckDB est vide ou non avant de lancer le run dbt
-    if not duckdb_empty:
-        # Création des vues et export
-        run_dbt(profile, "local", config["models_directory"], ".", logger, install_deps=False)
-    else:
-        logger.error(f"❌ Base {db_config["path"]} vide ")
+    # # Vérifie si la base DuckDB est vide ou non avant de lancer le run dbt
+    # if not duckdb_empty:
+    #     # Création des vues et export
+    #     run_dbt(profile, "local", config["models_directory"], ".", logger, install_deps=False)
+    # else:
+    #     logger.error(f"❌ Base {db_config["path"]} vide ")
+
+    # Réinitialisation de l'historique /!\ Seulement à activer si besoin
+    loader.connect()
+    loader.reset_histo()
+    loader.close()
 
 def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_db_config: dict, today: str, logger: Logger):
     """
