@@ -369,10 +369,10 @@ class PostgreSQLLoader(DataBasePipeline):
             Nom de la table à laquelle on ajoute les données de la première. 
 
         """
-        query = f"""
+        query = text(f"""
             INSERT INTO {target}
             SELECT * FROM {source}
-        """
+        """)
         conn.execute(query)
         self.logger.info(f"✅ Données de {source} ajoutées à {target}")
 
