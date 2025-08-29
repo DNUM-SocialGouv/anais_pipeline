@@ -379,10 +379,10 @@ class DuckDBPipeline(DataBasePipeline):
 
         try:
             if not self.is_table_exist(conn, query_params_histo) and self.is_table_exist(conn, query_params):
-                self.add_date_if_not_exist(conn, table_name) # Ajout de la date du jour dans la table actuel -> envoyer dans l'historique
+                self.add_current_date_if_not_exist(conn, table_name) # Ajout de la date du jour dans la table actuel -> envoyer dans l'historique
                 self.copy_table_into_new(conn, table_name, target_name)
             elif self.is_table_exist(conn, query_params_histo) and self.is_table_exist(conn, query_params):
-                self.add_date_if_not_exist(conn, table_name) # Ajout de la date du jour dans la table actuel -> envoyer dans l'historique
+                self.add_current_date_if_not_exist(conn, table_name) # Ajout de la date du jour dans la table actuel -> envoyer dans l'historique
                 self.append_table(conn, table_name, target_name)
             self.truncate_table(conn, table_name)
         except Exception as e:
