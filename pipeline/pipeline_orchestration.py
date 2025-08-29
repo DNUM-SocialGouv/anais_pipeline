@@ -136,7 +136,7 @@ def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_
 
     # # Remplissage des tables de la base postgres
     pg_loader.connect()
-    pg_loader.copy_table(config["input_to_download"])
+    pg_loader.copy_table(config["table_to_copy"])
 
     # Création des vues et export
     run_dbt(profile, "anais", config["models_directory"], ".", logger)
@@ -145,11 +145,11 @@ def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_
     sftp = SFTPSync(config["local_directory_input"], logger)
 
     pg_loader.export_csv(config["input_to_download"], date=today)
-    # sftp.upload_file_to_sftp(config["input_to_download"], config["local_directory_output"], config["remote_directory_input"], date=today)
+    sftp.upload_file_to_sftp(config["input_to_download"], config["local_directory_output"], config["remote_directory_input"], date=today)
 
     # Upload les vues
     pg_loader.export_csv(config["files_to_upload"], date=today)
-    # sftp.upload_file_to_sftp(config["files_to_upload"], config["local_directory_output"], config["remote_directory_output"], date=today)
+    sftp.upload_file_to_sftp(config["files_to_upload"], config["local_directory_output"], config["remote_directory_output"], date=today)
     pg_loader.close()
 
 
@@ -194,7 +194,7 @@ def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_
     try:
         # Si la base duckDB Staging existe
         if os.path.isfile(staging_db_config["path"]):
-            ddb_loader.copy_table(config["input_to_download"])
+            ddb_loader.copy_table(config["table_to_copy"])
 
         elif os.listdir(config["local_directory_input"]) and os.listdir(config["create_table_directory"]):
             ddb_loader.run()
