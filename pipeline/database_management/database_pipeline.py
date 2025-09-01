@@ -271,12 +271,12 @@ class DataBasePipeline:
             self.load_csv_file(conn, csv_file)
         self.logger.info(f"Fin du chargement des fichiers CSV vers {self.typedb}.")
 
-        # Historisation
-        for sql_file in Path(self.sql_folder).glob("*.sql"):
-            self.historise_table(conn, sql_file)        
-
         for csv_file in Path(self.csv_folder_input).glob("*.csv"):
             query_params = {"schema": self.schema, "table": csv_file.stem}
+
+            # Historisation
+            self.historise_table(conn, query_params)
+
             self.check_table(conn, query_params, print_table=False, show_row_count = True)
 
             # Vérification des données l'historique
