@@ -205,14 +205,15 @@ class DataBasePipeline:
 
         try:
             # Création de la table historique
-            if not self.is_table_exist(conn, query_params_histo) and self.is_table_exist(conn, query_params):
+            if not self.is_table_exist(conn, query_params_histo):
                 self.copy_table_into_new(conn, table_name, table_name_histo)
             
-            elif self.is_table_exist(conn, query_params_histo) and self.is_table_exist(conn, query_params):
+            elif self.is_table_exist(conn, query_params_histo):
                 self.append_table(conn, table_name, table_name_histo) 
 
             # Ajout de la date du jour dans la table historique  
-            self.add_current_date(conn, table_name_histo, "date_ingestion")  
+            self.add_current_date(conn, table_name_histo, "date_ingestion")
+            self.logger.info(f"✅ Données de {table_name} historisées avec succès dans {table_name_histo}")
 
         except Exception as e:
             self.logger.error(f"❌ Erreur lors de l'historisation : {e}")
