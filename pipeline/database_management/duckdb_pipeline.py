@@ -331,6 +331,7 @@ class DuckDBPipeline(DataBasePipeline):
 
         # Colonnes communes
         common_cols = [col for col in source_cols if col in target_cols]
+        print(source_cols)
         print(target_cols)
 
         cols_str = ", ".join([f'"{col}"' for col in common_cols])
