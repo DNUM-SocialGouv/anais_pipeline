@@ -48,12 +48,6 @@ def anais_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
     # Création des vues et export
     run_dbt(profile, "anais", config["models_directory"], ".", logger, install_deps=False)
 
-    # # Réinitialisation de l'historique /!\ Seulement à activer si besoin
-    # pg_loader.connect()
-    # pg_loader.reset_histo()
-    # pg_loader.close()
-
-
 
 def local_staging_pipeline(profile: str, config: dict, db_config: dict, logger: Logger):
     """
@@ -105,10 +99,6 @@ def local_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
     else:
         logger.error(f"❌ Base {db_config["path"]} vide ")
 
-    # # Réinitialisation de l'historique /!\ Seulement à activer si besoin
-    # loader.connect()
-    # loader.reset_histo()
-    # loader.close()
 
 def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_db_config: dict, today: str, logger: Logger):
     """

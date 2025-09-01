@@ -263,13 +263,13 @@ class DataBasePipeline:
             - Vérification de leur création
         """
         conn = self.conn
-        # for sql_file in Path(self.sql_folder).glob("*.sql"):
-        #     self.execute_sql_file(conn, sql_file)
+        for sql_file in Path(self.sql_folder).glob("*.sql"):
+            self.execute_sql_file(conn, sql_file)
 
-        # self.logger.info(f"Début du chargement des fichiers CSV vers {self.typedb}.")
-        # for csv_file in Path(self.csv_folder_input).glob("*.csv"):
-        #     self.load_csv_file(conn, csv_file)
-        # self.logger.info(f"Fin du chargement des fichiers CSV vers {self.typedb}.")
+        self.logger.info(f"Début du chargement des fichiers CSV vers {self.typedb}.")
+        for csv_file in Path(self.csv_folder_input).glob("*.csv"):
+            self.load_csv_file(conn, csv_file)
+        self.logger.info(f"Fin du chargement des fichiers CSV vers {self.typedb}.")
 
         for csv_file in Path(self.csv_folder_input).glob("*.csv"):
             query_params = {"schema": self.schema, "table": csv_file.stem}
