@@ -341,12 +341,9 @@ class PostgreSQLLoader(DataBasePipeline):
             Nom de la table à laquelle on ajoute les données de la première. 
 
         """
-        # query = sql.SQL("CREATE TABLE {target} AS TABLE {source}").format(
-        #     target=sql.Identifier(target),
-        #     source=sql.Identifier(source)
-        # )
         query = text(f"CREATE TABLE {target} AS TABLE {source} WITH DATA")
         conn.execute(query)
+        conn.commit()
         self.logger.info(f"✅ Table historique {target} créée à partir de {source}")
 
     def append_table(self, conn, source: str, target: str):
