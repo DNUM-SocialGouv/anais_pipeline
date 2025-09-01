@@ -387,6 +387,7 @@ class PostgreSQLLoader(DataBasePipeline):
             SELECT {cols_str} FROM {source}
         """)
         conn.execute(query)
+        conn.commit()
         self.logger.info(f"✅ Données de {source} ajoutées à {target}")
 
     def add_current_date(self, conn, table_name: str, column_name: str):
@@ -422,6 +423,7 @@ class PostgreSQLLoader(DataBasePipeline):
             SET {column_name} = CURRENT_TIMESTAMP AT TIME ZONE '{tz}'
             WHERE {column_name} IS NULL
         '''))
+        conn.commit()
 
     def drop_column(self, conn, table_name: str, column_name: str):
         """
