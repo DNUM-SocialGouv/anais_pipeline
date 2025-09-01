@@ -415,7 +415,7 @@ class PostgreSQLLoader(DataBasePipeline):
         column_exists = conn.execute(check_query).fetchone()
 
         if not column_exists:
-            conn.execute(text(f'ALTER TABLE "{table_name}" ADD COLUMN {column_name} TIMESTAMPTZ'))
+            conn.execute(text(f'ALTER TABLE "{table_name}" ADD COLUMN {column_name} TIMESTAMP'))
             self.logger.info(f"Colonne {column_name} créée dans la table {table_name}")
         
         conn.execute(text(f'''
