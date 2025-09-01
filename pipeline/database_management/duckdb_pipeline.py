@@ -332,7 +332,7 @@ class DuckDBPipeline(DataBasePipeline):
         # Colonnes communes
         common_cols = [col for col in source_cols if col in target_cols]
 
-        cols_str = ", ".join(common_cols)
+        cols_str = ", ".join([f'"{col}"' for col in common_cols])
         query = f"""
             INSERT INTO {target} ({cols_str})
             SELECT {cols_str} FROM {source}
