@@ -324,9 +324,9 @@ class DuckDBPipeline(DataBasePipeline):
 
         """
         # Récupérer les colonnes des deux tables
-        source_cols = [row[0] for row in conn.execute(
+        source_cols = [row[1] for row in conn.execute(
             f"PRAGMA table_info('{source}')").fetchall()]
-        target_cols = [row[0] for row in conn.execute(
+        target_cols = [row[1] for row in conn.execute(
             f"PRAGMA table_info('{target}')").fetchall()]
 
         # Colonnes communes
