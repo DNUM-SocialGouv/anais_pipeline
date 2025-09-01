@@ -61,7 +61,7 @@ class PostgreSQLLoader(DataBasePipeline):
         self.conn = self.engine.connect()
         self.logger.info("Connexion PostgreSQL établie avec succès.")
 
-    def postgres_drop_table(self, conn, query_params: dict):
+    def drop_table(self, conn, query_params: dict):
         """
         Supprime une table et les vues qui lui sont liées.
 
@@ -315,7 +315,7 @@ class PostgreSQLLoader(DataBasePipeline):
 
             try:
                 if self.is_table_exist(conn, query_params):
-                    self.postgres_drop_table(conn, query_params)
+                    self.drop_table(conn, query_params)
                 trans.commit()
                 
                 df.to_sql(db_table_name, engine_target, if_exists='replace', index=False, schema=self.schema)
@@ -371,7 +371,7 @@ class PostgreSQLLoader(DataBasePipeline):
         conn.execute(query)
         self.logger.info(f"✅ Données de {source} ajoutées à {target}")
 
-    def add_current_date_if_not_exist(self, conn, table_name: str, column_name: str):
+    def add_current_date(self, conn, table_name: str, column_name: str):
         """
         Ajoute la date du jour (date d'historisation) à une table.
 
@@ -385,10 +385,24 @@ class PostgreSQLLoader(DataBasePipeline):
             Nom de la colonne date.
         """
         tz = "Europe/Paris"
-        conn.execute(text(f'ALTER TABLE "{table_name}" ADD COLUMN {column_name} TIMESTAMP'))
+        
+        # Vérifier que la colonne existe
+        check_query = text(f"""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = '{table_name}'
+            AND column_name = '{column_name}'
+        """)
+        column_exists = conn.execute(check_query).fetchone()
+
+        if not column_exists:
+            conn.execute(text(f'ALTER TABLE "{table_name}" ADD COLUMN {column_name} TIMESTAMPTZ'))
+            self.logger.info(f"Colonne {column_name} créée dans la table {table_name}")
+        
         conn.execute(text(f'''
             UPDATE "{table_name}"
             SET {column_name} = CURRENT_TIMESTAMP AT TIME ZONE '{tz}'
+            WHERE {column_name} IS NULL
         '''))
 
     def drop_column(self, conn, table_name: str, column_name: str):
@@ -452,7 +466,7 @@ class PostgreSQLLoader(DataBasePipeline):
         try:
             for table in tables:
                 query_params = {"schema": schema, "table": table}
-                self.postgres_drop_table(conn, query_params)
+                self.drop_table(conn, query_params)
                 self.logger.info(f"✅ Table {schema}.{table} supprimée")
             conn.commit()
         except Exception as e:

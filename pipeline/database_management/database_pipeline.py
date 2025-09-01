@@ -162,14 +162,13 @@ class DataBasePipeline:
             query_params = {"schema": self.schema, "table": table_name}
 
             try:
-                # Si la table existe déjà, elle est historisée
+                # Si la table existe déjà, elle est supprimée
                 if self.is_table_exist(conn, query_params):
-                    self.historise_table(conn, query_params)
-                    self.logger.info(f"✅ Table {table_name} historisée avec succès")
-                # Si la table n'existe pas, elle est créée
-                else:
-                    self.create_table(conn, sql, query_params)
-                    self.logger.info(f"✅ Table créée avec succès : {sql_file.name}")
+                    self.drop_table(conn, query_params)
+
+                # Création de la table
+                self.create_table(conn, sql, query_params)
+                self.logger.info(f"✅ Table créée avec succès : {sql_file.name}")
             except Exception as e:
                 self.logger.error(f"❌ Erreur lors de l'exécution du SQL {sql_file.name}: {e}")
 
@@ -200,19 +199,20 @@ class DataBasePipeline:
             Paramètres à injecter dans la requête SQL.
         """
         table_name = query_params["table"]
-        target_name = f"z{table_name}"
+        table_name_histo = f"z{table_name}"
         query_params_histo = query_params.copy()
-        query_params_histo['table'] = target_name
+        query_params_histo['table'] = table_name_histo
 
-        try: 
-            self.add_current_date_if_not_exist(conn, table_name, "date_historisation") # Ajout de la date du jour dans la table actuel -> envoyer dans l'historique
-
+        try:
+            # Création de la table historique
             if not self.is_table_exist(conn, query_params_histo) and self.is_table_exist(conn, query_params):
-                self.copy_table_into_new(conn, table_name, target_name)
+                self.copy_table_into_new(conn, table_name, table_name_histo)
+            
             elif self.is_table_exist(conn, query_params_histo) and self.is_table_exist(conn, query_params):
-                self.append_table(conn, table_name, target_name)
-            self.drop_column(conn, table_name, "date_historisation")
-            self.truncate_table(conn, table_name)
+                self.append_table(conn, table_name, table_name_histo) 
+
+            # Ajout de la date du jour dans la table historique  
+            self.add_current_date(conn, table_name_histo, "date_ingestion")  
 
         except Exception as e:
             self.logger.error(f"❌ Erreur lors de l'historisation : {e}")
@@ -269,6 +269,10 @@ class DataBasePipeline:
         for csv_file in Path(self.csv_folder_input).glob("*.csv"):
             self.load_csv_file(conn, csv_file)
         self.logger.info(f"Fin du chargement des fichiers CSV vers {self.typedb}.")
+
+        # Historisation
+        for sql_file in Path(self.sql_folder).glob("*.sql"):
+            self.historise_table(conn, sql_file)        
 
         for csv_file in Path(self.csv_folder_input).glob("*.csv"):
             query_params = {"schema": self.schema, "table": csv_file.stem}

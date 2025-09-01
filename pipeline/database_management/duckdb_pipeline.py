@@ -330,7 +330,7 @@ class DuckDBPipeline(DataBasePipeline):
         conn.execute(query)
         self.logger.info(f"✅ Données de {source} ajoutées à {target}")
 
-    def add_current_date_if_not_exist(self, conn, table_name: str, column_name: str):
+    def add_current_date(self, conn, table_name: str, column_name: str):
         """
         Ajoute la date du jour (date d'historisation) à une table.
 
@@ -344,10 +344,24 @@ class DuckDBPipeline(DataBasePipeline):
             Nom de la colonne date.
         """
         tz = "Europe/Paris"
-        conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN date_historisation TIMESTAMP')
+        
+        # Vérifier que la colonne existe
+        check_query = f"""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = '{table_name}'
+            AND column_name = '{column_name}'
+        """
+        column_exists = conn.execute(check_query).fetchone()
+
+        if not column_exists:
+            conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN {column_name} TIMESTAMP')
+            self.logger.info(f"Colonne {column_name} créée dans la table {table_name}")
+        
         conn.execute(f'''
             UPDATE "{table_name}"
-            SET {column_name} = CURRENT_TIMESTAMP AT TIME ZONE '{tz}'
+            SET {column_name} = timezone('{tz}', CURRENT_TIMESTAMP)
+            WHERE {column_name} IS NULL
         ''')
 
     def drop_column(self, conn, table_name: str, column_name: str):
@@ -379,7 +393,7 @@ class DuckDBPipeline(DataBasePipeline):
         """
         conn.execute(f"TRUNCATE TABLE {table_name}")
 
-    def duckdb_drop_table(self, conn, query_params: dict):
+    def drop_table(self, conn, query_params: dict):
         """
         Supprime une table et les vues qui lui sont liées dans DuckDB.
 
@@ -442,7 +456,7 @@ class DuckDBPipeline(DataBasePipeline):
         try:
             for table in tables:
                 query_params = {"schema": schema, "table": table}
-                self.duckdb_drop_table(conn, query_params)
+                self.drop_table(conn, query_params)
                 self.logger.info(f"✅ Table {schema}.{table} supprimée")
         except Exception as e:
             self.logger.error(f"❌ Erreur lors de la réinitialisation de l'historique : {e}")
