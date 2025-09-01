@@ -364,9 +364,30 @@ class PostgreSQLLoader(DataBasePipeline):
             Nom de la table à laquelle on ajoute les données de la première. 
 
         """
+        # Récupérer les colonnes de la table source
+        source_cols = [row[0] for row in conn.execute(text(f"""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = :source
+            ORDER BY ordinal_position
+        """), {"source": source}).fetchall()]
+
+        # Récupérer les colonnes de la table target
+        target_cols = [row[0] for row in conn.execute(text(f"""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = :target
+            ORDER BY ordinal_position
+        """), {"target": target}).fetchall()]
+
+        # Colonnes en commun
+        common_cols = [col for col in source_cols if col in target_cols]
+
+        cols_str = ", ".join([f'"{col}"' for col in common_cols])  # protéger les noms de colonnes
+
         query = text(f"""
-            INSERT INTO {target}
-            SELECT * FROM {source}
+            INSERT INTO {target} ({cols_str})
+            SELECT {cols_str} FROM {source}
         """)
         conn.execute(query)
         self.logger.info(f"✅ Données de {source} ajoutées à {target}")

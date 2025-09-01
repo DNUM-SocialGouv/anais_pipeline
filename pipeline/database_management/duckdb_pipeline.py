@@ -323,9 +323,19 @@ class DuckDBPipeline(DataBasePipeline):
             Nom de la table à laquelle on ajoute les données de la première. 
 
         """
+        # Récupérer les colonnes des deux tables
+        source_cols = [row[0] for row in conn.execute(
+            f"PRAGMA table_info('{source}')").fetchall()]
+        target_cols = [row[0] for row in conn.execute(
+            f"PRAGMA table_info('{target}')").fetchall()]
+
+        # Colonnes communes
+        common_cols = [col for col in source_cols if col in target_cols]
+
+        cols_str = ", ".join(common_cols)
         query = f"""
-            INSERT INTO {target}
-            SELECT * FROM {source}
+            INSERT INTO {target} ({cols_str})
+            SELECT {cols_str} FROM {source}
         """
         conn.execute(query)
         self.logger.info(f"✅ Données de {source} ajoutées à {target}")
