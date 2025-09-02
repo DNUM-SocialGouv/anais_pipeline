@@ -311,7 +311,7 @@ class DuckDBPipeline(DataBasePipeline):
     def append_table(self, conn, source: str, target: str):
         """
         Ajoute les données de la table source à la table target.
-        Les deux tables doivent avoir la même structure (mêmes colonnes et types).
+        Seules les colonnes communes seront copiées.
 
         Parameters
         ----------

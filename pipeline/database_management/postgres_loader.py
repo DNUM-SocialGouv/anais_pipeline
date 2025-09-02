@@ -443,7 +443,7 @@ class PostgreSQLLoader(DataBasePipeline):
 
     def truncate_table(self, conn, table_name: str):
         """
-        Vide une table dans la base duckDB.
+        Vide une table dans la base Postgres.
 
         Parameters
         ----------
@@ -454,6 +454,7 @@ class PostgreSQLLoader(DataBasePipeline):
         """
         query = text(f'TRUNCATE TABLE "{table_name}" RESTART IDENTITY CASCADE;')
         conn.execute(query)
+        conn.commit()
 
     def reset_histo(self):
         """
