@@ -247,6 +247,10 @@ class DataBasePipeline:
         date : str
             Date présente dans le nom des fichiers à exporter.
         """
+        if not views_to_export:
+            self.logger.warning("⚠️ Aucun mapping de vues à exporter (views_to_export est vide ou None)")
+            return
+
         conn = self.conn
         for table_name, csv_name in views_to_export.items():
             if table_name:
