@@ -93,7 +93,7 @@ def load_metadata_YAML(file_name: str, table: str, logger: Logger, config_file_d
         
         return metadata[table]
     except KeyError as e:
-        logger.error(e)
+        logger.error(f"{table} n'est pas existant dans le fichier {file_name}: {e}")
         raise
     except Exception as e:
         logger.error(f"Erreur inattendue lors du chargement de la configuration : {e}")
