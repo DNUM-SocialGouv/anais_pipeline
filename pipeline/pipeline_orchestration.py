@@ -7,7 +7,7 @@ import os.path
 from pipeline.utils.sftp_sync import SFTPSync
 from pipeline.database_management.duckdb_pipeline import DuckDBPipeline
 from pipeline.database_management.postgres_loader import PostgreSQLLoader
-from pipeline.utils.dbt_tools import run_dbt, test_dbt
+from pipeline.utils.dbt_tools import dbt_exec
 
 # === Fonctions ===
 def anais_staging_pipeline(profile: str, config: dict, db_config: dict, logger: Logger):
@@ -46,8 +46,8 @@ def anais_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
     pg_loader.close()
 
     # Création des vues et export
-    run_dbt(profile, "anais", config["models_directory"], ".", logger, install_deps=False)
-    test_dbt(profile, "anais", config["models_directory"], ".", logger)
+    dbt_exec("run", profile, "anais", config["models_directory"], ".", logger, install_deps=False)
+    dbt_exec("test", profile, "anais", config["models_directory"], ".", logger)
 
 
 def local_staging_pipeline(profile: str, config: dict, db_config: dict, logger: Logger):
@@ -96,8 +96,8 @@ def local_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
     # Vérifie si la base DuckDB est vide ou non avant de lancer le run dbt
     if not duckdb_empty:
         # Création des vues et export
-        run_dbt(profile, "local", config["models_directory"], ".", logger, install_deps=False)
-        test_dbt(profile, "anais", config["models_directory"], ".", logger)
+        dbt_exec("run", profile, "local", config["models_directory"], ".", logger, install_deps=False)
+        dbt_exec("test", profile, "anais", config["models_directory"], ".", logger)
     else:
         logger.error(f"❌ Base {db_config["path"]} vide ")
 
@@ -142,8 +142,8 @@ def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_
     pg_loader.copy_table(config["table_to_copy"])
 
     # Création des vues et export
-    run_dbt(profile, "anais", config["models_directory"], ".", logger)
-    test_dbt(profile, "anais", config["models_directory"], ".", logger)
+    dbt_exec("run", profile, "anais", config["models_directory"], ".", logger)
+    dbt_exec("test", profile, "anais", config["models_directory"], ".", logger)
 
     # Upload les tables qui servent à la création des vues
     sftp = SFTPSync(config["local_directory_input"], logger)
@@ -217,8 +217,8 @@ def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_
     # Vérifie si la base DuckDB est vide ou non avant de lancer le run dbt
     if not duckdb_empty:
         # Création des vues et export
-        run_dbt(profile, "local", config["models_directory"], ".", logger)
-        test_dbt(profile, "local", config["models_directory"], ".", logger)
+        dbt_exec("run", profile, "local", config["models_directory"], ".", logger)
+        dbt_exec("test", profile, "local", config["models_directory"], ".", logger)
 
         # Upload les vues
         ddb_loader.connect()

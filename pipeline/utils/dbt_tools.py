@@ -16,59 +16,61 @@ def dbt_deps(project_path: str):
          "--project-dir", project_path
         ])
 
-def run_dbt(profile: str, target: Literal["local", "anais"], project_dir: str, profiles_dir: str, logger: Logger, install_deps: bool = True):
-    """
-    Fonction exécutant la commande 'dbt run' avec les différentes options.
-    Exécute obligatoirement le répertoire 'base' dans les modèles dbt, ainsi que le répertoire choisi.
+# def dbt_exec("run", profile: str, target: Literal["local", "anais"], project_dir: str, profiles_dir: str, logger: Logger, install_deps: bool = True):
+#     """
+#     Fonction exécutant la commande 'dbt run' avec les différentes options.
+#     Exécute obligatoirement le répertoire 'base' dans les modèles dbt, ainsi que le répertoire choisi.
 
-    Parameters
-    ----------
-    profile : str
-        Profile dbt à utiliser parmis ceux dans 'profiles.yml'.
-    target : Literal["local", "anais"]
-        Choix de la base à utiliser : local ou anais.
-    project_dir : str
-        Répertoire du projet dbt à exécuter (contenant le 'dbt_project.yml')
-    profiles_dir : str
-        Répertoire du projet dbt (contenant le 'profiles.yml').
-    logger : Logger
-        Fichier de log.
-    """
-    try:
-        project_path = str(Path(project_dir).resolve())
-        profiles_path = str(Path(profiles_dir).resolve())
+#     Parameters
+#     ----------
+#     profile : str
+#         Profile dbt à utiliser parmis ceux dans 'profiles.yml'.
+#     target : Literal["local", "anais"]
+#         Choix de la base à utiliser : local ou anais.
+#     project_dir : str
+#         Répertoire du projet dbt à exécuter (contenant le 'dbt_project.yml')
+#     profiles_dir : str
+#         Répertoire du projet dbt (contenant le 'profiles.yml').
+#     logger : Logger
+#         Fichier de log.
+#     """
+#     try:
+#         project_path = str(Path(project_dir).resolve())
+#         profiles_path = str(Path(profiles_dir).resolve())
 
-        if not os.path.exists(os.path.join(project_path, "package-lock.yml")) and install_deps:
-            dbt_deps_install = dbt_deps(project_path)
+#         if not os.path.exists(os.path.join(project_path, "package-lock.yml")) and install_deps:
+#             dbt_deps_install = dbt_deps(project_path)
 
-        result = subprocess.run(
-            ["dbt",
-             "run",
-             "--project-dir", project_path,
-             "--profiles-dir", profiles_path,
-             "--profile", profile,
-             "--target", target,
-             "--select", f"+{project_dir}"
-             ],
-            capture_output=True,
-            text=True,
-            check=True
-        )
-        logger.info(f"✅ Dbt run de {project_dir} terminé avec succès")
-        logger.info(result.stdout)
+#         result = subprocess.run(
+#             ["dbt",
+#              "run",
+#              "--project-dir", project_path,
+#              "--profiles-dir", profiles_path,
+#              "--profile", profile,
+#              "--target", target,
+#              "--select", f"+{project_dir}"
+#              ],
+#             capture_output=True,
+#             text=True,
+#             check=True
+#         )
+#         logger.info(f"✅ Dbt run de {project_dir} terminé avec succès")
+#         logger.info(result.stdout)
 
-    except subprocess.CalledProcessError as e:
-        logger.error("❌ Erreur lors du dbt run :")
-        logger.error(e.stdout)
+#     except subprocess.CalledProcessError as e:
+#         logger.error("❌ Erreur lors du dbt run :")
+#         logger.error(e.stdout)
 
 
-def test_dbt(profile: str, target: Literal["local", "anais"], project_dir: str, profiles_dir: str, logger: Logger, install_deps: bool = True):
+def dbt_exec(type_exec: str, profile: str, target: Literal["local", "anais"], project_dir: str, profiles_dir: str, logger: Logger, install_deps: bool = True):
     """
     Fonction exécutant la commande 'dbt test' avec les différentes options.
     Exécute obligatoirement le répertoire 'base' dans les modèles dbt, ainsi que le répertoire choisi.
 
     Parameters
     ----------
+    type_exec : str
+        Type d'exécution dbt (run, test, compile)
     profile : str
         Profile dbt à utiliser parmis ceux dans 'profiles.yml'.
     target : Literal["local", "anais"]
@@ -89,7 +91,7 @@ def test_dbt(profile: str, target: Literal["local", "anais"], project_dir: str, 
 
         result = subprocess.run(
             ["dbt",
-             "test",
+             type_exec,
              "--project-dir", project_path,
              "--profiles-dir", profiles_path,
              "--profile", profile,
@@ -111,4 +113,5 @@ if __name__ == "__main__":
     config_var = env_var() 
     config_var = setup_config(config_var)
 
-    run_dbt(config_var["profile"], config_var["env"], config_var["config"]["models_directory"], ".", config_var["logger"])
+    dbt_exec("run", config_var["profile"], config_var["env"], config_var["config"]["models_directory"], ".", config_var["logger"])
+    dbt_exec("test", config_var["profile"], config_var["env"], config_var["config"]["models_directory"], ".", config_var["logger"])
