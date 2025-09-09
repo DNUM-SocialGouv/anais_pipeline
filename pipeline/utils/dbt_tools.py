@@ -102,11 +102,11 @@ def dbt_exec(type_exec: str, profile: str, target: Literal["local", "anais"], pr
             text=True,
             check=True
         )
-        logger.info(f"✅ Dbt test de {project_dir} terminé avec succès")
+        logger.info(f"✅ Dbt {type_exec} de {project_dir} terminé avec succès")
         logger.info(result.stdout)
 
     except subprocess.CalledProcessError as e:
-        logger.error("❌ Erreur lors du dbt test :")
+        logger.error(f"❌ Erreur lors du dbt {type_exec} :")
         logger.error(e.stdout)
 
 if __name__ == "__main__":
