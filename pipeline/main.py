@@ -3,7 +3,7 @@ from typing import Literal
 
 # === Modules ===
 from pipeline.utils.config import env_var, setup_config
-from pipeline.pipeline_orchestration import (anais_staging_pipeline,
+from pipeline.orchestration.pipeline_orchestration import (anais_staging_pipeline,
                                              local_staging_pipeline,
                                              anais_project_pipeline,
                                              local_project_pipeline)
