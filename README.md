@@ -125,27 +125,25 @@ et `profile = '<Nom_projet>'`
 ```
 
 ## 5. Utilités des fichiers
-### ./pipeline/
+### 5.1 Fichiers à la racine `./`
 Répertoire d'orchestration de la pipeline Python.
 
-main.py : Programme d'exécution de la pipeline.
+- `pyproject.toml` : Fichier contenant les dépendances et packages nécessaires pour le lancement de la pipeline.
+- `main.py` : Programme d'exécution de la pipeline.
 
-database_management/database_pipeline.py : Réalise les actions communes pour n'importe quelle database (lecture de fichier SQL, exécution du fichier sql, export de vues, run de la pipeline...). Fonctionne en complément avec duckdb_pipeline.py et postgres_loader.py.
+### 5.2 Fichiers à la racine `./pipeline/database_management/`
+- `database_pipeline.py` : Réalise les actions communes pour n'importe quelle database (lecture de fichier SQL, exécution du fichier sql, export de vues, run de la pipeline...). Fonctionne en complément avec duckdb_pipeline.py et postgres_loader.py.
+- `duckdb_pipeline.py` : Réalise les actions spécifiques à une base (connexion à la base, création de table, chargement des données dans la BDD). Fonctionne en complément avec database_pipeline.py.
 
-database_management/duckdb_pipeline.py : Réalise les actions spécifiques à une base (connexion à la base, création de table, chargement des données dans la BDD). Fonctionne en complément avec database_pipeline.py.
+- `postgres_loader.py` : Réalise les actions spécifiques à une base postgres (connexion à la base, création de table, chargement des données dans la BDD). Fonctionne en complément avec database_pipeline.py.
 
-database_management/postgres_loader.py : Réalise les actions spécifiques à une base postgres (connexion à la base, création de table, chargement des données dans la BDD). Fonctionne en complément avec database_pipeline.py.
+### 5.3 Fichiers à la racine `./pipeline/orchestration/`
+- `pipeline_orchestration.py` : Orchestre les différentes étapes de la pipeline selon l'environnement (local ou anais) et le projet (Staging ou autre).
 
-orchestration/pipeline_orchestration.py : Orchestre les différentes étapes de la pipeline selon l'environnement (local ou anais) et le projet (Staging ou autre).
-
-utils/config.py : Définie les paramètres de configuration liés aux logs, à la database, à l'heure d'exécution ...
-
-utils/csv_management.py : Réalise les actions relatives à la manipulation de fichier csv (transformation d'un .xlsx en .csv, lecture du .csv avec délimiteur personnalisé, standarisation des colonnes, conversion des types, export ...).
-
-utils/dbt_tools.py : Permet de lancer des commandes dbt (dbt run, dbt test et dbt deps).
-
-utils/load_yml.py : Permet la lecture d'un fichier .yaml
-
-utils/sftp_sync.py : Réalise les actions relatives à une connexion SFTP (connexion, import, export...).
-
-utils/logging_management.py : Initialise la log selon l'environnement.
+### 5.4 Fichiers à la racine `./pipeline/utils/`
+- `config.py` : Définie les paramètres de configuration liés aux logs, à la database, à l'heure d'exécution ...
+- `csv_management.py` : Réalise les actions relatives à la manipulation de fichier csv (transformation d'un .xlsx en .csv, lecture du .csv avec délimiteur personnalisé, standarisation des colonnes, conversion des types, export ...).
+- `dbt_tools.py` : Permet de lancer des commandes dbt (dbt run, dbt test et dbt deps).
+- `load_yml.py` : Permet la lecture d'un fichier .yaml
+- `sftp_sync.py` : Réalise les actions relatives à une connexion SFTP (connexion, import, export...).
+- `logging_management.py` : Initialise la log selon l'environnement.
