@@ -129,7 +129,7 @@ et `profile = '<Nom_projet>'`
 Répertoire d'orchestration de la pipeline Python.
 
 - `pyproject.toml` : Fichier contenant les dépendances et packages nécessaires pour le lancement de la pipeline.
-- `main.py` : Programme d'exécution de la pipeline.
+- `pipeline/main.py` : Programme d'exécution de la pipeline.
 
 ### 5.2 Fichiers à la racine `./pipeline/database_management/`
 - `database_pipeline.py` : Réalise les actions communes pour n'importe quelle database (lecture de fichier SQL, exécution du fichier sql, export de vues, run de la pipeline...). Fonctionne en complément avec duckdb_pipeline.py et postgres_loader.py.
