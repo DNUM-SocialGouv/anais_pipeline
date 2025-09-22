@@ -134,7 +134,6 @@ Répertoire d'orchestration de la pipeline Python.
 ### 5.2 Fichiers à la racine `./pipeline/database_management/`
 - `database_pipeline.py` : Réalise les actions communes pour n'importe quelle database (lecture de fichier SQL, exécution du fichier sql, export de vues, run de la pipeline...). Fonctionne en complément avec duckdb_pipeline.py et postgres_loader.py.
 - `duckdb_pipeline.py` : Réalise les actions spécifiques à une base (connexion à la base, création de table, chargement des données dans la BDD). Fonctionne en complément avec database_pipeline.py.
-
 - `postgres_loader.py` : Réalise les actions spécifiques à une base postgres (connexion à la base, création de table, chargement des données dans la BDD). Fonctionne en complément avec database_pipeline.py.
 
 ### 5.3 Fichiers à la racine `./pipeline/orchestration/`
