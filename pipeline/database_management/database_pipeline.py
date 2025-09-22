@@ -141,7 +141,7 @@ class DataBasePipeline:
 
     def execute_sql_file(self, conn, sql_file: Path):
         """
-        Exécute un fichier SQL Create Table, si la table n'existe pas. Sinon historise la table etcopie les données dans une table d'historique.
+        Exécute un fichier SQL Create Table, si la table n'existe pas. Sinon historise la table et copie les données dans une table d'historique.
 
         Parameters
         ----------
@@ -149,8 +149,6 @@ class DataBasePipeline:
             Connexion à la base de données.
         sql_file : Path
             Fichier SQL Create table.
-        create_table_func : Callable[[Any, str, dict], None]
-            Fonction create_table relative au type de base.
         """
         sql = self.read_sql_file(sql_file)
         table_name = self.find_table_name_in_sql(sql)

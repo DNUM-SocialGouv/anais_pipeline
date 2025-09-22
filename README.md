@@ -1,5 +1,5 @@
 # Package Anais pipeline
-Package de la pipeline d'exécution d'Anais
+Package Python de la pipeline d'exécution d'Anais
 
 # Installation & Lancement du projet DBT
 
@@ -27,19 +27,12 @@ uv uv pip install "git+https://github.com/ton-org/mon-package-pipeline.git@main"
 
 ---
 
-## 2. Fichiers requits en complément du package
-
-#### - Fichier `metadata.yml`, contentant les paramètres relatifs au projet utilisé (configuration présenté dans anais_staging -> main)
-#### - Fichier `.env`, contenant les paramètres d'authentification au serveur SFTP et les mots de passe des databases (configuration présenté dans anais_staging -> main)
-
----
-
-## 3. Lancement du pipeline :
+## 3. Lancement de la pipeline :
 
 L'ensemble de la Pipeline est exécuté depuis le `main.py`.
 
 ### Pour l'exécution de la pipeline:
-1. Placer vous dans le bon répertoire `anais_Nom_projet`
+1. Placer vous dans le bon répertoire `anais_<Nom_projet>`
 
 ```bash
 # Placer vous dans anais_Nom_projet
