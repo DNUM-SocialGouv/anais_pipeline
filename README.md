@@ -3,7 +3,7 @@ Package Python de la pipeline d'exécution d'Anais
 
 # Installation & Lancement du projet DBT
 
-Cette section décrit les étapes nécessaires pour installer les dépendances, configurer DBT, instancier la base de données si besoin, et exécuter le projet.
+Cette section décrit les étapes nécessaires pour installer les dépendances et exécuter le projet.
 
 ---
 
@@ -27,11 +27,12 @@ uv uv pip install "git+https://github.com/ton-org/mon-package-pipeline.git@main"
 
 ---
 
-## 3. Lancement de la pipeline :
+## 2. Lancement de la pipeline :
 
 L'ensemble de la Pipeline est exécuté depuis le `main.py`.
+La Pipeline est importée sous forme de package dans les différents projets.
 
-### Pour l'exécution de la pipeline:
+### Pour l'exécution de la pipeline depuis un projet:
 1. Placer vous dans le bon répertoire `anais_<Nom_projet>`
 
 ```bash
@@ -41,79 +42,81 @@ cd anais_Nom_projet
 
 2. Lancer le `main.py`
 ```bash
-uv run main.py --env "local" --profile "Nom_projet"
+uv run -m pipeline.main --env "local" --profile "<Nom_projet>"
 ```
-Avec env = 'local' ou 'anais' selon votre environnement de travail
-et profile = 'Nom_projet'
+Avec `env = 'local'` ou `'anais'` selon votre environnement de travail
+et `profile = '<Nom_projet>'`
 
-## 4. Fonctionnement de la pipeline
-### Pipeline sur env 'local':
-1. Récupération des fichiers d'input. !! Les fichiers doivent être placés manuellement dans le dossier `input/` sous format **.csv** !! (les délimiteurs sont gérés automatiquement)
+## 3. Fonctionnement de la pipeline
+### 3.1 Pour Staging
+#### Pipeline Staging sur env 'local':
+1. Récupération des fichiers d'input. Ces fichiers doivent être placés manuellement dans le dossier `input/` sous format **.csv** (les délimiteurs sont gérés automatiquement).
 2. Création de la base DuckDB si inexistante.
-3. Connexion à la base DuckDB
-4. Création des tables si inexistantes
-5. Lecture des csv avec standardisation des colonnes (sans caractères spéciaux) -> injection des données dans les tables
-6. Vérification de l'injection
-7. Exécution de la commande `run dbt` -> Création des vues relatives au projet
-8. Export des vues dans le dossier `output/`
-9. Fermeture de la connexion à la base DuckDB
-
-### Pipeline sur env 'anais':
-1. Récupération des fichiers d'input. Ces fichiers sont récupérés automatiquement sur le SFTP et placés dans le dossier `input/` sous format **.csv** (les délimiteurs sont gérés automatiquement)
-2. Création de la base Postgres si inexistante.
-3. Connexion à la base Postgres
-4. Création des tables si inexistantes
-5. Lecture des csv avec standardisation des colonnes (sans caractères spéciaux) -> injection des données dans les tables
-6. Vérification de l'injection
-7. Exécution de la commande `run dbt` -> Création des vues relatives au projet
-8. Export des vues dans le dossier `output/` au format **.csv**
-9. Fermeture de la connexion à la base Postgres
-10. Export des **.csv** en output vers le SFTP
+3. Connexion à la base DuckDB.
+4. Création des tables, même si déjà existantes. Les fichiers sql de création de table (CREATE TABLE) doivent être placés dans le répertoire indiqué dans le `create_table_directory` de `metadata.yml`.
+5. Lecture des csv avec standardisation des colonnes (ni caractères spéciaux, ni majuscule) -> injection des données dans les tables.
+6. Historisation des données pour chaque table vers les tables `z<nom_de_la_table` avec indication que la date d'injection dans la colonne `date_ingestion`.
+7. Vérification de la réussite de l'injection.
+8. Fermeture de la connexion à la base DuckDB.
+9. Exécution de la commande `run dbt` -> Création des vues relatives au projet.
 
 
-## 5. Architecture du package
+#### Pipeline Staging sur env 'anais':
+1. Récupération des fichiers d'input depuis le SFTP. Ces fichiers sont placés dans le dossier `input/` sous format **.csv** (les délimiteurs sont gérés automatiquement).
+2. Connexion à la base Postgres.
+3. Création des tables, même si déjà existantes. Les fichiers sql de création de table (CREATE TABLE) doivent être placés dans le répertoire indiqué dans le `create_table_directory` de `metadata.yml`.
+4. Lecture des csv avec standardisation des colonnes (ni caractères spéciaux, ni majuscule) -> injection des données dans les tables.
+5. Historisation des données pour chaque table vers les tables `z<nom_de_la_table` avec indication que la date d'injection dans la colonne `date_ingestion`.
+6. Vérification de la réussite de l'injection.
+7. Fermeture de la connexion à la base Postgres.
+8. Exécution de la commande `run dbt` -> Création des vues relatives au projet.
+
+### 3.2 Pour un autre projet
+#### Pipeline <Nom_projet> sur env 'local':
+1. Création de la base DuckDB si inexistante.
+2. Connexion à la base DuckDB.
+3. Méthode 1 : Récupération des tables d'origine nécessaires à <Nom_projet> à partir de la base staging. 
+3. Méthode 2 : Création des tables d'origine nécessaires à <Nom_projet> à partir des fichiers CREATE TABLE .sql (`output_sql/<Nom_projet>/`) -> injection des données dans les tables à partir des fichiers de données .csv (`input/<Nom_projet>/`).
+4. Historisation des données pour chaque table vers les tables `z<nom_de_la_table` avec indication que la date d'injection dans la colonne `date_ingestion`.
+5. Vérification de la réussite de l'injection.
+7. Fermeture de la connexion à la base DuckDB.
+8. Exécution de la commande `run dbt` -> Création des vues relatives au projet.
+9. Export des vues <Nom_projet> vers le répertoire `output/<Nom_projet>/`.
+
+
+#### Pipeline <Nom_projet> sur env 'anais':
+1. Connexion à la base Postgres.
+2. Récupération des tables d'origine nécessaires à <Nom_projet> à partir de la base staging.
+3. Historisation des données pour chaque table vers les tables `z<nom_de_la_table` avec indication que la date d'injection dans la colonne `date_ingestion`.
+4. Exécution de la commande `run dbt` -> Création des vues relatives au projet.
+5. Export des vues <Nom_projet> vers le répertoire `output/<Nom_projet>/`.
+6. Export des vues <Nom_projet> vers le SFTP `/SCN_BDD/<Nom_projet>/output`.
+7. Fermeture de la connexion à la base Postgres.
+
+## 4. Architecture du package
 
 ## 🏗️ Architecture du projet
 
 ```plaintext
 .
-├── data
-│   └── duckdb_database.duckdb
-├── input
-│   ├── cert_dc_insern_2023_2024.csv
-│   ...
-│   └── v_region.csv
-├── logs
-│   └── sources.log
-├── output
-│   ├── sa_ods_insee_2025_07_09.csv
-│   ...
-│   └── sa_ods_pmsi_2025_07_09.csv
-├── Staging
-│   ├── dbtStaging
-│   │   ├── dbt_project.yml
-│   │   ├── logs
-│   │   ├── macros
-│   │   ├── models
-│   │   ├── target
-│   │   └── tests
-│   ├── logs
-│   ├── main.py
-│   ├── output_sql
-│   │   ├── cert_dc_insern_2023_2024.sql
-│   │   ...
-│   │   └── v_region.sql
-│   ├── pipeline
-│   │   ├── __init__.py
-│   │   ├── csv_management.py
-│   │   ├── database_pipeline.py
-│   │   ├── duckdb_pipeline.py
-│   │   ├── load_yml.py
-│   │   ├── metadata.yml
-│   │   ├── postgres_loader.py
-│   │   └── sftp_sync.py
-│   ├── staging_tables.txt
-│   └── staging_views.txt
+├── pipeline
+│   ├── __init__.py
+│   ├── main.py
+│   ├── database_management
+│   │   ├── database_pipeline.py
+│   │   ├── duckdb_pipeline.py
+│   │   ├── __init__.py
+│   │   └── postgres_loader.py
+│   ├── orchestration
+│   │   └── pipeline_orchestration.py
+│   └── utils
+│       ├── config.py
+│       ├── csv_management.py
+│       ├── dbt_tools.py
+│       ├── __init__.py
+│       ├── load_yml.py
+│       ├── logging_management.py
+│       └── sftp_sync.py
 ├── poetry.lock
 ├── profiles.yml
 ├── pyproject.toml
@@ -121,55 +124,28 @@ et profile = 'Nom_projet'
 └── uv.lock
 ```
 
-## 6. Utilités des fichiers
-### ./dbtCertDC/
-Répertoire de fonctionnement des modèles DBT -> création de vue SQL.
-
-dbt_project.yml : Fichier de configuration de DBT (obligatoire)
-
-macros/ : Répertoire de stockage des macro jinja
-
-models/ : Répertoire de stockage des modèles dbt
-
+## 5. Utilités des fichiers
 ### ./pipeline/
 Répertoire d'orchestration de la pipeline Python.
 
-.env : Fichier secret contenant le paramétrage vers le SFTP et les mots de passes des bases de données postgres.
+main.py : Programme d'exécution de la pipeline.
 
-database_pipeline.py : Réalise les actions communes pour n'importe quelle database (lecture de fichier SQL, exécution du fichier sql, export de vues, run de la pipeline...). Fonctionne en complément avec duckdb_pipeline.py et postgres_loader.py.
+database_management/database_pipeline.py : Réalise les actions communes pour n'importe quelle database (lecture de fichier SQL, exécution du fichier sql, export de vues, run de la pipeline...). Fonctionne en complément avec duckdb_pipeline.py et postgres_loader.py.
 
-duckdb_pipeline.py : Réalise les actions spécifiques à une base (connexion à la base, création de table, chargement des données dans la BDD). Fonctionne en complément avec database_pipeline.py.
+database_management/duckdb_pipeline.py : Réalise les actions spécifiques à une base (connexion à la base, création de table, chargement des données dans la BDD). Fonctionne en complément avec database_pipeline.py.
 
-postgres_loader.py : Réalise les actions spécifiques à une base postgres (connexion à la base, création de table, chargement des données dans la BDD). Fonctionne en complément avec database_pipeline.py.
+database_management/postgres_loader.py : Réalise les actions spécifiques à une base postgres (connexion à la base, création de table, chargement des données dans la BDD). Fonctionne en complément avec database_pipeline.py.
 
-sftp_sync.py : Réalise les actions relatives à une connexion SFTP (connexion, import, export...).
+orchestration/pipeline_orchestration.py : Orchestre les différentes étapes de la pipeline selon l'environnement (local ou anais) et le projet (Staging ou autre).
 
-csv_management.py : Réalise les actions relatives à la manipulation de fichier csv (transformation d'un .xlsx en .csv, lecture du .csv avec délimiteur personnalisé, standarisation des colonnes, conversion des types, export ...).
+utils/config.py : Définie les paramètres de configuration liés aux logs, à la database, à l'heure d'exécution ...
 
-metadata.yml : Contient les informations relatives aux fichiers .csv provenant du SFTP.
+utils/csv_management.py : Réalise les actions relatives à la manipulation de fichier csv (transformation d'un .xlsx en .csv, lecture du .csv avec délimiteur personnalisé, standarisation des colonnes, conversion des types, export ...).
 
-load_yml.py : Lit un fichier .yml
+utils/dbt_tools.py : Permet de lancer des commandes dbt (dbt run, dbt test et dbt deps).
 
+utils/load_yml.py : Permet la lecture d'un fichier .yaml
 
-./main.py : Programme d'exécution de la pipeline
+utils/sftp_sync.py : Réalise les actions relatives à une connexion SFTP (connexion, import, export...).
 
-
-./output_sql/ : Répertoire qui contient les fichiers .sql de création de table (CREATE TABLE)
-
-
-./logs/ : Répertoire de la log
-
-
-./data/duckdb_database.duckdb : Base duckDB
-
-
-./input/ : Répertoire de stockage des fichiers .csv en entrée
-./output/ : Répertoire de stockage des fichiers .csv en sortie
-
-
-./profiles.yml : Contient les informations relatives aux bases des différents projets.
-
-
-./poetry.lock
-./uv.lock
-./pyproject.toml
+utils/logging_management.py : Initialise la log selon l'environnement.

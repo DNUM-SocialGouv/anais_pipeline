@@ -153,7 +153,7 @@ def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_
 
     # Upload les vues
     pg_loader.export_csv(config["files_to_upload"], date=today)
-    # sftp.upload_file_to_sftp(config["files_to_upload"], config["local_directory_output"], config["remote_directory_output"], date=today)
+    sftp.upload_file_to_sftp(config["files_to_upload"], config["local_directory_output"], config["remote_directory_output"], date=today)
     pg_loader.close()
 
 
