@@ -1,18 +1,20 @@
-# === Packages ===
+# Packages
+import duckdb
 import os
 from pathlib import Path
+import logging
 from typing import Callable, Any
 import re
-from logging import Logger
 
-# === Modules ===
-from pipeline.utils.csv_management import TableInCsv
+# Modules
+from pipeline.csv_management import export_to_csv
 
-
-# === Classes ===
-# Classe DataBasePipeline qui gère les actions relatives à n'importe quel database
+# Classe DataBasePipeline qui gère les actions relatives à n'importe quelle database
 class DataBasePipeline:
-    def __init__(self, db_config: dict, config: dict, logger: Logger, staging_db_config: dict = None):
+    def __init__(self,
+                sql_folder: str = "Staging/output_sql/",
+                csv_folder_input: str = "input/",
+                csv_folder_output: str = "output/"):
         """
         Classe qui réalise les actions communes pour n'importe quel database.
         Cette classe est héritée par une classe relative au type de base.
@@ -20,38 +22,29 @@ class DataBasePipeline:
             - self.conn = connexion à la base de données
             - self.schema = schéma de la base de données
             - self.typedb = type de la base de données
-            - is_table_exist(self, conn, query_params: dict, print_log: bool) -> bool = fonction qui vérifie l'existence de la table
+            - is_table_exist(self, conn, query_params: dict) -> bool = fonction qui vérifie l'existence de la table
             - show_row_count(self, conn, query_params: dict) = fonction qui compte le nombre de lignes de la table
             - print_table(self, conn, query_params: dict, limit: int) = fonction qui affiche la table
             - create_table(self, conn, sql_query: str, query_params: str) = fonction d'exécution des fichier SQL de CREATE TABLE
             - load_csv_file(self, conn, csv_file: Path) = fonction d'injection des données d'un csv vers une table de la base de données
-
         Parameters
         ----------
-        db_config : dict
-            Paramètres de connexion vers la base.
-        config : dict
-            Metadata du profile (dans metadata.yml).
-        logger : logging.Logger
-            Fichier de log.
-        staging_db_config : dict
-            Paramètres de connexion vers la base Staging, None by default.
+        sql_folder : str, optional
+            Chemin des fichiers SQL Create table, by default "Staging/output_sql/"
+        csv_folder_input : str, optional
+            Chemine des fichiers csv en entrée, by default "input/"
+        csv_folder_output : str, optional
+            Chemin des fichiers csv en sortie, by default "output/"
         """
-        self.sql_folder = config["create_table_directory"]
-        self.csv_folder_input = config["local_directory_input"]
-        self.csv_folder_output = config["local_directory_output"]
-        self.db_config = db_config
-        self.staging_db_config = staging_db_config
-        self.logger = logger
-        self.ensure_directories_exist()
+        self.sql_folder = sql_folder
+        self.csv_folder_input = csv_folder_input
+        self.csv_folder_output = csv_folder_output
 
     def ensure_directories_exist(self):
         """ Crée les dossiers nécessaires s'ils n'existent pas. """
-        folders = [self.sql_folder, self.csv_folder_input, self.csv_folder_output]
-
-        for folder in folders:
+        for folder in [self.sql_folder, self.csv_folder_input, self.csv_folder_output]:
             os.makedirs(folder, exist_ok=True)
-            self.logger.info(f"Dossier vérifié/créé : {folder}")
+            logging.info(f"Dossier vérifié/créé : {folder}")
 
     def read_sql_file(self, sql_file: Path) -> str:
         """
@@ -65,7 +58,7 @@ class DataBasePipeline:
         Returns
         -------
         str
-            Contenu du fichier SQL.      
+            Contenu du fichier SQL.        
         """
         with open(sql_file, "r", encoding="utf-8") as f:
             return f.read()
@@ -109,6 +102,8 @@ class DataBasePipeline:
         ----------
         conn : sqlalchemy.engine.base.Connection | duckdb.DuckDBPyConnection
             Connexion à la base de données.
+        table_name : str
+            Nom de la table à vérifier.
         query_params : dict
             Paramètres à injecter dans la requête SQL.
         print_table : bool, optional
@@ -123,7 +118,7 @@ class DataBasePipeline:
         """
         try:
             # Vérifie si la table existe ou non
-            table_exist = self.is_table_exist(conn, query_params, True)
+            table_exist = self.is_table_exist(conn, query_params)
 
             if table_exist:
                 # Vérifie si la table est remplie ou non
@@ -136,12 +131,12 @@ class DataBasePipeline:
             return table_exist
 
         except Exception as e:
-            self.logger.error(f"❌ Erreur lors de la vérification de la table '{query_params["table"]}' → {e}")
+            logging.error(f"❌ Erreur lors de la vérification de la table '{query_params["table"]}' → {e}")
             return False
 
-    def execute_sql_file(self, conn, sql_file: Path):
+    def execute_sql_file(self, conn, sql_file: Path, create_table_func: Callable[[Any, str, dict], None]):
         """
-        Exécute un fichier SQL Create Table, si la table n'existe pas. Sinon historise la table et copie les données dans une table d'historique.
+        Exécute un fichier SQL Create Table.
 
         Parameters
         ----------
@@ -149,90 +144,24 @@ class DataBasePipeline:
             Connexion à la base de données.
         sql_file : Path
             Fichier SQL Create table.
+        create_table_func : Callable[[Any, str, dict], None]
+            Fonction create_table relative au type de base.
         """
         sql = self.read_sql_file(sql_file)
         table_name = self.find_table_name_in_sql(sql)
 
         if not table_name:
-            self.logger.info(f"❌ Nom de table introuvable dans le fichier SQL : '{sql_file.name}'")
+            logging.info(f"❌ Nom de table introuvable dans le fichier SQL : '{sql_file.name}'")
             return
         else:
             query_params = {"schema": self.schema, "table": table_name}
 
-            try:
-                # Si la table existe déjà, elle est supprimée
-                if self.is_table_exist(conn, query_params):
-                    self.drop_table(conn, query_params)
-
-                # Création de la table
-                self.create_table(conn, sql, query_params)
-                self.logger.info(f"✅ Table créée avec succès : {sql_file.name}")
-            except Exception as e:
-                self.logger.error(f"❌ Erreur lors de l'exécution du SQL {sql_file.name}: {e}")
-
-    def copy_table(self, views_to_import: dict):
-        """
-        Copie une table de staging vers une base cible.
-
-        Parameters
-        ----------
-        views_to_import : dict
-            Liste des vues à importer.
-        """
-        for staging_table_name, db_table_name in views_to_import.items():
-            if staging_table_name:
-                self.copy_table_from_staging(self.conn, staging_table_name, db_table_name)
-            else:
-                self.logger.warning("⚠️ Aucune table spécifiée")
-
-    def historise_table(self, conn, query_params: dict):
-        """
-        Historise les données d'une table. Copie le contenue de la table dans la ztable, puis vide la table.
-
-        Parameters
-        ----------
-        conn : sqlalchemy.engine.base.Connection | duckdb.DuckDBPyConnection
-            Connexion à la base de données.
-        query_params : dict
-            Paramètres à injecter dans la requête SQL.
-        """
-        table_name = query_params["table"]
-        table_name_histo = f"z{table_name}"
-        query_params_histo = query_params.copy()
-        query_params_histo['table'] = table_name_histo
-
-        try:
-            # Création de la table historique
-            if not self.is_table_exist(conn, query_params_histo):
-                self.copy_table_into_new(conn, table_name, table_name_histo)
-            
-            elif self.is_table_exist(conn, query_params_histo):
-                self.append_table(conn, table_name, table_name_histo) 
-
-            # Ajout de la date du jour dans la table historique  
-            self.add_current_date(conn, table_name_histo, "date_ingestion")
-            self.logger.info(f"✅ Données de {table_name} historisées avec succès dans {table_name_histo}")
-
-        except Exception as e:
-            self.logger.error(f"❌ Erreur lors de l'historisation : {e}")
-            raise
-
-    def import_csv(self, views_to_import: dict):
-        """
-        Importe les vues vers un format csv.
-
-        Parameters
-        ----------
-        views_to_import : dict
-            Liste des vues à importer.
-        """
-        conn = self.conn
-        for table_name, csv_name in views_to_import.items():
-            if table_name:
-                transfo = TableInCsv(conn, table_name, csv_name, self.fetch_df, self.csv_folder_input, self.logger)
-                transfo.import_to_csv()
-            else:
-                self.logger.warning("⚠️ Aucune table spécifiée")
+            if not self.is_table_exist(conn, query_params):
+                try:
+                    create_table_func(conn, sql, query_params)
+                    logging.info(f"✅ Table créée avec succès : {sql_file.name}")
+                except Exception as e:
+                    logging.error(f"❌ Erreur lors de l'exécution du SQL {sql_file.name}: {e}")
 
     def export_csv(self, views_to_export: dict, date: str):
         """
@@ -245,17 +174,11 @@ class DataBasePipeline:
         date : str
             Date présente dans le nom des fichiers à exporter.
         """
-        if not views_to_export:
-            self.logger.warning("⚠️ Aucun mapping de vues à exporter (views_to_export est vide ou None)")
-            return
-
-        conn = self.conn
         for table_name, csv_name in views_to_export.items():
             if table_name:
-                transfo = TableInCsv(conn, table_name, csv_name, self.fetch_df, self.csv_folder_output, self.logger)
-                transfo.export_to_csv(date=date)
+                export_to_csv(table_name, csv_name, self.fetch_df, self.csv_folder_output, date)
             else:
-                self.logger.warning("⚠️ Aucune table spécifiée")
+                logging.warning("⚠️ Aucune table spécifiée")
 
     def run(self):
         """
@@ -264,23 +187,17 @@ class DataBasePipeline:
             - Chargement des CSV et injection dans les tables
             - Vérification de leur création
         """
+        self.ensure_directories_exist()
         conn = self.conn
         for sql_file in Path(self.sql_folder).glob("*.sql"):
-            self.execute_sql_file(conn, sql_file)
+            self.execute_sql_file(conn, sql_file, self.create_table)
 
-        self.logger.info(f"Début du chargement des fichiers CSV vers {self.typedb}.")
+        logging.info(f"Début du chargement des fichiers CSV vers {self.typedb}.")
         for csv_file in Path(self.csv_folder_input).glob("*.csv"):
             self.load_csv_file(conn, csv_file)
-        self.logger.info(f"Fin du chargement des fichiers CSV vers {self.typedb}.")
+        logging.info(f"Fin du chargement des fichiers CSV vers {self.typedb}.")
 
         for csv_file in Path(self.csv_folder_input).glob("*.csv"):
             query_params = {"schema": self.schema, "table": csv_file.stem}
-
-            # Historisation
-            self.historise_table(conn, query_params)
-
             self.check_table(conn, query_params, print_table=False, show_row_count = True)
-
-            # Vérification des données l'historique
-            query_params = {"schema": self.schema, "table": f"z{csv_file.stem}"}
-            self.check_table(conn, query_params, print_table=False, show_row_count = True)
+        conn.close()

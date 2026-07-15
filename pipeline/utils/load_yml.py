@@ -1,13 +1,14 @@
-# === Packages ===
+# --- Importation de fichier de configuration ou de correspondance
+# Importation des packages
 import os
 from pathlib import Path
 import yaml
+import logging
 import re
-from logging import Logger
 
 
-# === Fonctions ===
-def load_YAML(file_name: str, config_file_dir: str, logger: Logger) -> dict:
+# Fonction
+def load_YAML(file_name: str, config_file_dir: str = None) -> dict:
     """
     Charge un fichier YAML.
 
@@ -17,8 +18,6 @@ def load_YAML(file_name: str, config_file_dir: str, logger: Logger) -> dict:
         Nom du fichier de configuration YAML.
     config_file_dir : str
         Chemin du fichier, by default None.
-    logger : Logger
-        Fichier de log.
 
     Returns
     -------
@@ -30,9 +29,7 @@ def load_YAML(file_name: str, config_file_dir: str, logger: Logger) -> dict:
     FileNotFoundError
         Si le fichier de configuration est introuvable.
     yaml.YAMLError
-        Si le fichier YAML est mal formaté.
-    logger : logging.Logger
-        Fichier de log.
+        Si le fichier YAML est mal formaté.  
     """
     if config_file_dir:
         path = os.path.join(config_file_dir, file_name)
@@ -42,21 +39,21 @@ def load_YAML(file_name: str, config_file_dir: str, logger: Logger) -> dict:
     try:
         with open(path, 'r') as f:
             file = yaml.safe_load(f)
-            logger.info(f"Acces config file readed from {path}")
+            logging.info(f"Acces config file readed from {path}")
             return file
 
     except FileNotFoundError:
-        logger.error(f"Fichier de configuration introuvable {path}")
+        logging.error(f"Fichier de configuration introuvable {path}")
         raise
     except yaml.YAMLError as e:
-        logger.error(f"Erreur de parsing YAML dans le fichier {file_name} : {e}")
+        logging.error(f"Erreur de parsing YAML dans le fichier {file_name} : {e}")
         raise
     except Exception as e:
-        logger.error(f"Erreur inattendue lors du chargement du fichier de configuration : {e}")
+        logging.error(f"Erreur inattendue lors du chargement du fichier de configuration : {e}")
         raise
 
 
-def load_metadata_YAML(file_name: str, table: str, logger: Logger, config_file_dir: str = None) -> dict:
+def load_metadata_YAML(file_name: str, table: str, config_file_dir: str = None) -> dict:
     """
     Charge le fichier de configuration et récupère la liste des colonnes d'une table donnée.
 
@@ -66,8 +63,6 @@ def load_metadata_YAML(file_name: str, table: str, logger: Logger, config_file_d
         Nom du fichier de configuration YAML.
     table : str
         Nom de la table dont on veut récupérer les colonnes.
-    logger : logging.Logger
-        Fichier de log.
     config_file_dir : str
         Chemin du fichier, by default None.
 
@@ -86,17 +81,17 @@ def load_metadata_YAML(file_name: str, table: str, logger: Logger, config_file_d
         Si le fichier YAML est mal formaté.
     """
     try:
-        metadata = load_YAML(file_name, config_file_dir, logger=logger)
+        metadata = load_YAML(file_name, config_file_dir)
 
         if table not in metadata:
             raise KeyError(f"La table '{table}' n'existe pas dans le fichier {file_name}.")
         
         return metadata[table]
     except KeyError as e:
-        logger.error(f"{table} n'est pas existant dans le fichier {file_name}: {e}")
+        logging.error(e)
         raise
     except Exception as e:
-        logger.error(f"Erreur inattendue lors du chargement de la configuration : {e}")
+        logging.error(f"Erreur inattendue lors du chargement de la configuration : {e}")
         raise
 
 

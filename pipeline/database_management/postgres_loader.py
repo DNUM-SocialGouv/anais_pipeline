@@ -1,67 +1,79 @@
-# === Packages ===
+
+# Packages
+import os
 import pandas as pd
+import logging
 from sqlalchemy import create_engine, inspect, text
 from dotenv import load_dotenv
 from pathlib import Path
-import urllib.parse
-from logging import Logger
 
-# === Modules ===
-from pipeline.utils.csv_management import ColumnsManagement
-from pipeline.database_management.database_pipeline import DataBasePipeline
-from pipeline.utils.load_yml import resolve_env_var
+# Modules
+from pipeline.csv_management import csv_pipeline
+from pipeline.database_pipeline import DataBasePipeline
+from pipeline.load_yml import resolve_env_var
 
-# === Chargement des variables d’environnement ===
+# Chargement des variables d’environnement
 load_dotenv()
 
+# Configuration du logger PostgreSQL
+os.makedirs("logs", exist_ok=True)
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
+logging.basicConfig(
+    filename="logs/postgres_loader.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
-# === Classes ===
+
 # Classe PostgreSQLLoader qui gère les actions relatives à une database postgres
 class PostgreSQLLoader(DataBasePipeline):
-    def __init__(self, db_config: dict, config: dict, logger: Logger, staging_db_config: dict = None):
+    def __init__(self,
+                 db_config: dict,
+                 sql_folder: str = "Staging/output_sql/",
+                 csv_folder_input: str = "input/",
+                 csv_folder_output: str = "output/"
+                 ):
         """
         Initialisation de la base Postgres. Classe héritière de DataBasePipeline.
 
         Parameters
         ----------
         db_config : dict
-            Paramètres de connexion vers la base.
-        config : dict
-            Metadata du profile (dans metadata.yml).
-        logger : logging.Logger
-            Fichier de log.
-        staging_db_config : dict
-            Paramètres de connexion vers la base Staging, None by default.
+            Configuration de la base postgres.
+        sql_folder : str, optional
+            Répertoire des fichiers SQL CREATE TABLE, by default "Staging/output_sql/"
+        csv_folder_input : str, optional
+            Répertoire des fichiers csv importés, by default "input/"
+        csv_folder_output : str, optional
+            Répertoire des fichiers csv exportés, by default "output/"
         """
-        super().__init__(db_config, config, logger, staging_db_config)
-        self.logger = logger
-        self.typedb = "postgres"
-        self.schema = db_config["schema"]
-        self.db_name = db_config["dbname"]
-        self.engine = self.init_engine(
-            db_config["user"],
-            urllib.parse.quote(resolve_env_var(db_config["password"])),
-            db_config["host"],
-            db_config["port"],
-            self.db_name
-            )
+        super().__init__(sql_folder=sql_folder,
+                         csv_folder_input=csv_folder_input,
+                         csv_folder_output=csv_folder_output)
 
-    def init_engine(self, user: str, password: str, host: str, port: str, database: str):
-        """ Initialisation de la connexion postgres. """
+        self.typedb = "postgres"
+        self.host = db_config["host"]
+        self.port = db_config["port"]
+        self.user = db_config["user"]
+        self.password = resolve_env_var(db_config["password"])
+        self.database = db_config["dbname"]
+        self.schema = db_config["schema"]
+        self.engine = self.init_engine()
+        self.conn = self.engine.connect()
+
+    def init_engine(self):
+        """ Connexion à la base postgres. """
         try:
-            url = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}"
+            url = f"postgresql+psycopg2://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
             engine = create_engine(url)
+            logging.info("Connexion PostgreSQL établie avec succès.")
             return engine
         except Exception as e:
-            self.logger.error(f"Erreur de connexion PostgreSQL : {e}")
+            logging.error(f"Erreur de connexion PostgreSQL : {e}")
             raise
 
-    def connect(self):
-        """ Connexion à la base postgres. """
-        self.conn = self.engine.connect()
-        self.logger.info("Connexion PostgreSQL établie avec succès.")
-
-    def drop_table(self, conn, query_params: dict):
+    def postgres_drop_table(self, conn, query_params: dict):
         """
         Supprime une table et les vues qui lui sont liées.
 
@@ -86,11 +98,11 @@ class PostgreSQLLoader(DataBasePipeline):
 
         for schema, view in views:
             # Suppression des vues liées à la table
-            self.logger.info(f"🗑 Vue '{view}' existante → suppression totale (DROP VIEW)")
+            logging.info(f"🗑 Vue '{view}' existante → suppression totale (DROP VIEW)")
             conn.execute(text(f'DROP VIEW IF EXISTS "{schema}"."{view}" CASCADE'))
 
         # Suppression de la table
-        self.logger.info(f"🗑 Table '{table_name}' existante → suppression totale (DROP TABLE)")
+        logging.info(f"🗑 Table '{table_name}' existante → suppression totale (DROP TABLE)")
         conn.execute(text(f"DROP TABLE IF EXISTS {table_name} CASCADE"))
 
     def create_table(self, conn, sql_query: str, query_params: str):
@@ -106,11 +118,9 @@ class PostgreSQLLoader(DataBasePipeline):
         query_params : dict
             Paramètres à injecter dans la requête SQL.
         """
-        try:
+        if self.is_table_exist(conn, query_params):
+            self.postgres_drop_table(conn, query_params)
             conn.execute(text(sql_query))
-        except Exception as e:
-            self.logger.error(f"❌ Erreur lors de l'exécution : {e}")
-            raise
 
     def get_postgres_schema(self, conn, table_name: str) -> pd.DataFrame:
         """
@@ -134,7 +144,7 @@ class PostgreSQLLoader(DataBasePipeline):
         schema_df = schema_df.rename(columns={"name": "column_name", "type": "column_type"})
         return schema_df
 
-    def is_table_exist(self, conn, query_params: dict, print_log: bool = False) -> bool:
+    def is_table_exist(self, conn, query_params: dict) -> bool:
         """
         Indique si la table existe ou non.
 
@@ -144,8 +154,6 @@ class PostgreSQLLoader(DataBasePipeline):
             Connexion à la base postgres.
         query_params : dict
             Paramètres à injecter dans la requête SQL.
-        print_log : bool
-            True si on souhaite afficher la log, False sinon, by default False.
 
         Returns
         -------
@@ -161,12 +169,10 @@ class PostgreSQLLoader(DataBasePipeline):
             """), query_params).scalar()
 
         if table_exists:
-            if print_log:
-                self.logger.info(f"✅ La table '{query_params['table']}' existe.")
+            # logging.warning(f"✅ La table '{table_name}' existe déjà.")
             return True
         else:
-            if print_log:
-                self.logger.warning(f"❌ La table '{query_params['table']}' du schéma {query_params['schema']} n'existe pas.")
+            logging.warning(f"❌ La table '{query_params['table']}' du schéma {query_params['schema']} n'existe pas.")
             return False
 
     def show_row_count(self, conn, query_params: dict):
@@ -188,9 +194,9 @@ class PostgreSQLLoader(DataBasePipeline):
             FROM {schema}.{table}""")).scalar()
 
         if row_count == 0:
-            self.logger.warning(f"⚠️ La table '{table}' du schéma {schema} est vide.")
+            logging.warning(f"⚠️ La table '{table}' du schéma {schema} est vide.")
         else:
-            self.logger.info(f"✅ La table '{table}' du schéma {schema} contient {row_count} lignes.")
+            logging.info(f"✅ La table '{table}' du schéma {schema} contient {row_count} lignes.")
 
     def print_table(self, conn, query_params: dict, limit: int):
         """
@@ -209,7 +215,7 @@ class PostgreSQLLoader(DataBasePipeline):
         table = query_params["table"]
 
         df = conn.execute(text(f"SELECT * FROM {schema}.{table} LIMIT {limit}"))
-        self.logger.info(f"🔍 Aperçu de '{table}' du schéma {schema} ({limit} lignes) :\n{df.to_string(index=False)}")
+        logging.info(f"🔍 Aperçu de '{table}' du schéma {schema} ({limit} lignes) :\n{df.to_string(index=False)}")
 
     def load_csv_file(self, conn, csv_file: Path):
         """
@@ -222,55 +228,43 @@ class PostgreSQLLoader(DataBasePipeline):
         csv_file : Path
             Fichier csv.
         """
-        self.logger.info(f"📥 Chargement du fichier : {csv_file}")
+        logging.info(f"📥 Chargement du fichier : {csv_file}")
         table_name = csv_file.stem
         query_params = {"schema": self.schema, "table": table_name}
 
         try:
             if not self.is_table_exist(conn, query_params):
-                self.logger.warning(f"Table {table_name} non trouvée, impossible de charger {csv_file.name}")
+                logging.warning(f"Table {table_name} non trouvée, impossible de charger {csv_file.name}")
                 return
 
             schema_df = self.get_postgres_schema(conn, table_name)
-            # Chargement du csv et datamanagement
-            pipeline = ColumnsManagement(csv_file=csv_file, schema_df=schema_df, logger=self.logger)
-            df = pipeline.df
-            self.logger.info(f"Taille de '{table_name}' : {df.shape}")
+
+            # Chargement des csv et datamanagement
+            df = csv_pipeline(csv_file, schema_df)
 
             # Création de la table avec la structure du CSV
-            self.logger.info(f"🆕 Injection dans la table '{table_name}' à partir du CSV {csv_file}")
+            logging.info(f"🆕 Injection dans la table '{table_name}' à partir du CSV {csv_file}")
+            df.to_sql(
+                table_name,
+                conn,
+                if_exists="append",
+                index=False,
+                method='multi',
+                chunksize=1000
+            )
 
-            trans = conn.get_transaction()
-            try:
-                df.to_sql(
-                    table_name,
-                    conn,
-                    schema=query_params["schema"],
-                    if_exists="append",
-                    index=False,
-                    method='multi',
-                    chunksize=1000
-                )
-                trans.commit()
-            except Exception as e:
-                trans.rollback()
-                self.logger.error(f"❌ Erreur lors de l'exécution : {e}")
-                raise
-
-            self.logger.info(f"✅ Table '{table_name}' créée et remplie avec succès ({csv_file})")
+            logging.info(f"✅ Table '{table_name}' créée et remplie avec succès ({csv_file})")
 
         except Exception as e:
-            self.logger.error(f"❌ Erreur pour le fichier {csv_file} → {e}")
+            logging.error(f"❌ Erreur pour le fichier {csv_file} → {e}")
 
-    def fetch_df(self, conn, table_name: str) -> pd.DataFrame:
+    def fetch_df(self, table_name: str) -> pd.DataFrame:
         """
         Fonction de chargement d'une table depuis une base postgres.
         Importante pour l'export des csv.
 
         Parameters
         ----------
-        conn : sqlalchemy.engine.base.Connection
-            Connexion à la base de données.
         table_name : str
             Nom de la table que l'on charge.
 
@@ -279,222 +273,10 @@ class PostgreSQLLoader(DataBasePipeline):
         pd.DataFrame
             Dataframe de la table chargée.
         """
-        conn.execute(text(f"SET search_path TO {self.schema}"))
-        conn.commit()
-        return pd.read_sql_table(table_name, conn)
-
-    def copy_table_from_staging(self, conn, staging_table_name: str, db_table_name: str):
-        """
-        Copie d'une table de la base Staging vers la base cible.
-
-        Parameters
-        ----------
-        staging_table_name : str
-            Nom de la table que l'on "copie".
-        db_table_name : str
-            Nom de la table que l'on "colle". 
-        """
-        staging_db_config = self.staging_db_config
-        if staging_db_config:
-            # Connexion aux deux bases
-            engine_source = self.init_engine(
-                staging_db_config["user"],
-                urllib.parse.quote(resolve_env_var(staging_db_config["password"])),
-                staging_db_config["host"],
-                staging_db_config["port"],
-                staging_db_config["dbname"]
-                )
-            engine_target = self.engine
-
-            # Copier de la base Staging
-            df = pd.read_sql(f"SELECT * FROM {staging_table_name}", engine_source)
-
-            # Coller dans la base cible (suppression de la table avant)
-            query_params = {"schema": self.schema, "table": db_table_name}
-            trans = conn.begin()
-
-            try:
-                if self.is_table_exist(conn, query_params):
-                    self.drop_table(conn, query_params)
-                trans.commit()
-                
-                df.to_sql(db_table_name, engine_target, if_exists='replace', index=False, schema=self.schema)
-                self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base {staging_db_config["dbname"]} vers la base {self.db_name} sous le nom {db_table_name}.")
-            except Exception as e:
-                trans.rollback()
-                self.logger.error(f"❌ Erreur lors de l'exécution : {e}")
-                raise
-        else:
-            self.logger.error("❌ La configuration de la base Staging n'a pas été indiquée.")
-
-    def copy_table_into_new(self, conn, source: str, target: str):
-        """
-        Copie une table dans une nouvelle.
-
-        Parameters
-        ----------
-        conn : sqlalchemy.engine.base.Connection
-            Connexion à la base de données.
-        source : str
-            Nom de la table que l'on "copie".
-        target : str
-            Nom de la table à laquelle on ajoute les données de la première. 
-
-        """
-        query = text(f"CREATE TABLE {target} AS TABLE {source} WITH DATA")
-        conn.execute(query)
-        conn.commit()
-        self.logger.info(f"✅ Table historique {target} créée à partir de {source}")
-
-    def append_table(self, conn, source: str, target: str):
-        """
-        Ajoute les données de la table source à la table target.
-        Les deux tables doivent avoir la même structure (mêmes colonnes et types).
-
-        Parameters
-        ----------
-        conn : sqlalchemy.engine.base.Connection
-            Connexion à la base de données.
-        source : str
-            Nom de la table que l'on "copie".
-        target : str
-            Nom de la table à laquelle on ajoute les données de la première. 
-
-        """
-        # Récupérer les colonnes de la table source
-        source_cols = [row[0] for row in conn.execute(text(f"""
-            SELECT column_name
-            FROM information_schema.columns
-            WHERE table_name = :source
-            ORDER BY ordinal_position
-        """), {"source": source}).fetchall()]
-
-        # Récupérer les colonnes de la table target
-        target_cols = [row[0] for row in conn.execute(text(f"""
-            SELECT column_name
-            FROM information_schema.columns
-            WHERE table_name = :target
-            ORDER BY ordinal_position
-        """), {"target": target}).fetchall()]
-
-        # Colonnes en commun
-        common_cols = [col for col in source_cols if col in target_cols]
-
-        cols_str = ", ".join([f'"{col}"' for col in common_cols])  # protéger les noms de colonnes
-
-        query = text(f"""
-            INSERT INTO {target} ({cols_str})
-            SELECT {cols_str} FROM {source}
-        """)
-        conn.execute(query)
-        conn.commit()
-        self.logger.info(f"✅ Données de {source} ajoutées à {target}")
-
-    def add_current_date(self, conn, table_name: str, column_name: str):
-        """
-        Ajoute la date du jour (date d'historisation) à une table.
-
-        Parameters
-        ----------
-        conn : sqlalchemy.engine.base.Connection
-            Connexion à la base DuckDB.
-        table_name : str
-            Nom de la table à vider.
-        column_name : str
-            Nom de la colonne date.
-        """
-        tz = "Europe/Paris"
-        
-        # Vérifier que la colonne existe
-        check_query = text(f"""
-            SELECT column_name
-            FROM information_schema.columns
-            WHERE table_name = '{table_name}'
-            AND column_name = '{column_name}'
-        """)
-        column_exists = conn.execute(check_query).fetchone()
-
-        if not column_exists:
-            conn.execute(text(f'ALTER TABLE "{table_name}" ADD COLUMN {column_name} TIMESTAMP'))
-            self.logger.info(f"Colonne {column_name} créée dans la table {table_name}")
-        
-        conn.execute(text(f'''
-            UPDATE "{table_name}"
-            SET {column_name} = CURRENT_TIMESTAMP AT TIME ZONE '{tz}'
-            WHERE {column_name} IS NULL
-        '''))
-        conn.commit()
-
-    def drop_column(self, conn, table_name: str, column_name: str):
-        """
-        Supprime une colonne d'une table dans une base Postgres.
-
-        Parameters
-        ----------
-        conn : sqlalchemy.engine.base.Connection
-            Connexion à la base Postgres.
-        table_name : str
-            Nom de la table.
-        column_name : str
-            Nom de la colonne à supprimer.
-        """
-        query = text(f'ALTER TABLE "{table_name}" DROP COLUMN "{column_name}"')
-        conn.execute(query)
-
-    def truncate_table(self, conn, table_name: str):
-        """
-        Vide une table dans la base Postgres.
-
-        Parameters
-        ----------
-        conn : sqlalchemy.engine.base.Connection
-            Connexion à la base DuckDB.
-        table_name : str
-            Nom de la table à vider.
-        """
-        query = text(f'TRUNCATE TABLE "{table_name}" RESTART IDENTITY CASCADE;')
-        conn.execute(query)
-        conn.commit()
-
-    def reset_histo(self):
-        """
-        Supprime l'ensemble des tables historiques.
-
-        Parameters
-        ----------
-        conn : sqlalchemy.engine.base.Connection
-            Connexion à la base DuckDB.
-        schema : str
-            Nom du schema postgres de l'historique à supprimer.
-        """
-        conn = self.conn
-        schema = self.schema
-
-        # Récupération des tables
-        query = text("""
-            SELECT table_name
-            FROM information_schema.tables
-            WHERE table_schema = :schema
-            AND table_name LIKE 'z%';
-        """)
-        tables = [row[0] for row in conn.execute(query, {"schema": schema}).fetchall()]
-
-        if not tables:
-            self.logger.info(f"Aucune table 'z%' trouvée dans le schéma {schema}")
-            return
-
-        # Suppression des tables
-        try:
-            for table in tables:
-                query_params = {"schema": schema, "table": table}
-                self.drop_table(conn, query_params)
-                self.logger.info(f"✅ Table {schema}.{table} supprimée")
-            conn.commit()
-        except Exception as e:
-            self.logger.error(f"❌ Erreur lors de la réinitialisation de l'historique : {e}")
-            raise
+        self.conn.execute(text(f"SET search_path TO {self.schema}"))
+        return pd.read_sql_table(table_name, self.conn)
 
     def close(self):
         """Ferme la connexion à la base de données postgres."""
         self.conn.close()
-        self.logger.info("Connexion à postgres fermée.")
+        logging.info("Connexion à postgres fermée.")
