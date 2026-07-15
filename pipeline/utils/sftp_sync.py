@@ -1,7 +1,7 @@
 # Packages
 import os
 import logging
-from paramiko import SFTPClient, Transport, SFTPAttributes
+from paramiko import SFTPAttributes, SSHClient, AutoAddPolicy
 import datetime
 from dotenv import load_dotenv
 from typing import Tuple, Optional, List, Dict
@@ -21,6 +21,8 @@ class SFTPSync:
         self.username = os.getenv("SFTP_USERNAME")
         self.password = os.getenv("SFTP_PASSWORD")
         self.output_folder = os.getenv("SFTP_OUTPUT_FOLDER", "input/")
+        self.private_key = os.getenv("SFTP_PRIVATE_KEY")
+        self.private_key_passphrase = os.getenv("SFTP_KEY_PASSPHRASE") or None
 
         os.makedirs(self.output_folder, exist_ok=True)
         os.makedirs("logs", exist_ok=True)
@@ -32,14 +34,28 @@ class SFTPSync:
         )
 
     def connect(self):
-        """
-        Initialisation de la connexion SFTP.
-        """
+        """Initialisation de la connexion SFTP."""
         try:
-            self.transport = Transport((self.host, self.port))
-            self.transport.connect(username=self.username, password=self.password)
-            self.sftp = SFTPClient.from_transport(self.transport)
+            self.client = SSHClient()
+
+            # Pour éviter les erreurs si la clé du serveur n'est pas encore connue.
+            # En production, il est préférable d'utiliser load_system_host_keys().
+            self.client.set_missing_host_key_policy(AutoAddPolicy())
+
+            self.client.connect(
+                hostname=self.host,
+                port=self.port,
+                username=self.username,
+                key_filename=self.private_key,
+                passphrase=self.private_key_passphrase,
+                look_for_keys=False,
+                allow_agent=False,
+            )
+
+            self.sftp = self.client.open_sftp()
+
             logging.info("Connexion SFTP établie.")
+
         except Exception as e:
             logging.error(f"Erreur de connexion SFTP : {e}")
             raise
@@ -195,9 +211,14 @@ class SFTPSync:
         self.close()
 
     def close(self):
-        """ Fermeture de la connexion SFTP """
-        self.sftp.close()
-        self.transport.close()
+        """Fermeture de la connexion SFTP."""
+
+        if hasattr(self, "sftp"):
+            self.sftp.close()
+
+        if hasattr(self, "client"):
+            self.client.close()
+
         logging.info("Connexion SFTP fermée.")
 
 
