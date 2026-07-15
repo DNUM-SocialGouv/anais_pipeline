@@ -66,9 +66,9 @@ def setup_config(config_var: dict, metadata_yml: str = METADATA_YML, profile_yml
 
     logger = setup_logger(env, f"logs/log_{env}.log")
 
-    config = load_metadata_YAML(metadata_yml, profile, logger, ".")
-    db_config = load_metadata_YAML(profile_yml, profile, logger, ".")["outputs"][env]
-    staging_db_config = load_metadata_YAML(profile_yml, "Staging", logger, ".")["outputs"][env]
+    config = load_metadata_YAML(metadata_yml, profile, ".")
+    db_config = load_metadata_YAML(profile_yml, profile, ".")["outputs"][env]
+    staging_db_config = load_metadata_YAML(profile_yml, "Staging", ".")["outputs"][env]
     today = date.strftime(date.today(), "%Y_%m_%d")
 
     config_var["logger"] = logger
