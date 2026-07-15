@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from typing import Tuple, Optional, List, Dict
 
 # Modules
-from pipeline.utils.csv_management import convert_excel_to_csv
+from pipeline.utils.csv_management import TransformExcel
 from pipeline.utils.load_yml import load_colnames_YAML
 
 
@@ -150,7 +150,7 @@ class SFTPSync:
                 if '.xlsx' in latest_file.filename:
                     local_xlsx_path = local_path.replace('.csv', '.xlsx')
                     self.download_file(remote_path, local_xlsx_path)
-                    convert_excel_to_csv(local_xlsx_path, local_path)
+                    TransformExcel(local_xlsx_path, local_path)
                 # Autres fichiers au format csv
                 else:
                     self.download_file(remote_path, local_path)
