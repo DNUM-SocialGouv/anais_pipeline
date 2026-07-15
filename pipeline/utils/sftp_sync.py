@@ -1,7 +1,7 @@
 # Packages
 import os
 import logging
-from paramiko import SFTPAttributes, SSHClient, AutoAddPolicy
+from paramiko import SFTPAttributes, SSHClient, AutoAddPolicy, RSAKey
 import datetime
 from dotenv import load_dotenv
 from typing import Tuple, Optional, List, Dict
@@ -35,6 +35,10 @@ class SFTPSync:
 
     def connect(self):
         """Initialisation de la connexion SFTP."""
+        print(self.private_key)
+        print(os.path.exists(self.private_key))
+        key = RSAKey.from_private_key_file(self.private_key)
+        print(key)
         try:
             self.client = SSHClient()
 
