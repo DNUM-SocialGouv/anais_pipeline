@@ -150,7 +150,7 @@ class SFTPSync:
             (item["path"], item["keyword"], item["file"])
             for item in files_list
         ]
-        print(files_to_download)
+
         # Boucle parcourant chaque fichier à télécharger
         for remote_dir, keyword, local_filename in files_to_download:
             logging.info(f"Recherche du fichier contenant '{keyword}' dans {remote_dir}")
@@ -227,4 +227,4 @@ if __name__ == "__main__":
     config_var = setup_config(config_var)
 
     sftp = SFTPSync()
-    sftp.download_all(config_var["config"]["tables"]["files_to_download"])
+    sftp.download_all(config_var["config_tables"]["files_to_download"])
