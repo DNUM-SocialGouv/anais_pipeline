@@ -8,7 +8,7 @@ from typing import Tuple, Optional, List, Dict
 
 # Modules
 from pipeline.utils.csv_management import TransformExcel
-from pipeline.utils.load_yml import load_colnames_YAML
+from pipeline.utils.config import env_var, setup_config
 
 
 # Classe SFTPSync
@@ -199,3 +199,11 @@ class SFTPSync:
         self.sftp.close()
         self.transport.close()
         logging.info("Connexion SFTP fermée.")
+
+
+if __name__ == "__main__":
+    config_var = env_var() 
+    config_var = setup_config(config_var)
+
+    sftp = SFTPSync(config_var["config"]["local_directory_input"], config_var["logger"])
+    sftp.download_all(config_var["config"]["files_to_download"])
