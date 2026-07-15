@@ -38,7 +38,7 @@ def anais_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
 
     # Récupération des fichiers sur le sftp
     sftp = SFTPSync(config["local_directory_input"], logger)
-    sftp.download_all(config["table"]["files_to_download"])
+    sftp.download_all(config["tables"]["files_to_download"])
 
     # Remplissage des tables de la base postgres
     pg_loader.connect()

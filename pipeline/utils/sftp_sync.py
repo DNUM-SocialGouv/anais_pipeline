@@ -227,4 +227,4 @@ if __name__ == "__main__":
     config_var = setup_config(config_var)
 
     sftp = SFTPSync()
-    sftp.download_all(config_var["config"]["table"]["files_to_download"])
+    sftp.download_all(config_var["config"]["tables"]["files_to_download"])
