@@ -8,9 +8,9 @@ from dotenv import load_dotenv
 from pathlib import Path
 
 # Modules
-from pipeline.csv_management import csv_pipeline
-from pipeline.database_pipeline import DataBasePipeline
-from pipeline.load_yml import resolve_env_var
+from pipeline.utils.csv_management import csv_pipeline
+from pipeline.database_management.database_pipeline import DataBasePipeline
+from pipeline.utils.load_yml import resolve_env_var
 
 # Chargement des variables d’environnement
 load_dotenv()

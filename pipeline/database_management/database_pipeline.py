@@ -7,7 +7,7 @@ from typing import Callable, Any
 import re
 
 # Modules
-from pipeline.csv_management import export_to_csv
+from pipeline.utils.csv_management import export_to_csv
 
 # Classe DataBasePipeline qui gère les actions relatives à n'importe quelle database
 class DataBasePipeline:

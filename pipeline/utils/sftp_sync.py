@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 from typing import Tuple, Optional, List, Dict
 
 # Modules
-from pipeline.csv_management import convert_excel_to_csv
-from pipeline.load_yml import load_colnames_YAML
+from pipeline.utils.csv_management import convert_excel_to_csv
+from pipeline.utils.load_yml import load_colnames_YAML
 
 
 # Classe SFTPSync

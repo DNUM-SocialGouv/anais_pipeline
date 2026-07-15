@@ -6,8 +6,8 @@ import logging
 import pandas as pd
 
 # Modules
-from pipeline.csv_management import csv_pipeline
-from pipeline.database_pipeline import DataBasePipeline
+from pipeline.utils.csv_management import csv_pipeline
+from pipeline.database_management.database_pipeline import DataBasePipeline
 
 # === Configuration du logger ===
 # Configuration du logger DBT
