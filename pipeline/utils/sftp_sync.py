@@ -205,5 +205,5 @@ if __name__ == "__main__":
     config_var = env_var() 
     config_var = setup_config(config_var)
 
-    sftp = SFTPSync(config_var["config"]["local_directory_input"], config_var["logger"])
+    sftp = SFTPSync()
     sftp.download_all(config_var["config"]["files_to_download"])
