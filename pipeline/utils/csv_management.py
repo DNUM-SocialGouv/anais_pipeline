@@ -244,10 +244,9 @@ class StandardizeColnames:
             - Réduit le nombre de caractère total à 63 (max)
         """
         self.remove_unnamed_columns()
-        
+
         new_columns = []
         for col in self.df.columns:
-            logging.warning(f"{col}")
             original = col
             col = col.strip()
             col = self.remove_accents(col)
