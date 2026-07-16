@@ -117,7 +117,7 @@ class DuckDBPipeline(DataBasePipeline):
                 """).fetchone()[0]
 
         if table_exists:
-            # logging.warning(f"✅ La table '{table_name}' existe déjà.")
+            logging.warning(f"✅ La table '{table_name}' existe déjà.")
             return True
         else:
             logging.warning(f"❌ La table '{table_name}' n'existe pas.")
