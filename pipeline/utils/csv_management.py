@@ -229,7 +229,7 @@ class StandardizeColnames:
         """
         new_columns = []
         for col in self.df.columns:
-            logging.warning(f"col")
+            logging.warning(f"{col}")
             original = col
             col = col.strip()
             col = self.remove_accents(col)
