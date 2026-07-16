@@ -248,19 +248,19 @@ def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_
             f"    > .sql : {config['create_table_directory']}"
         )
     finally:
-        # duckdb_empty = ddb_loader.is_duckdb_empty()
+        duckdb_empty = ddb_loader.is_duckdb_empty()
         ddb_loader.close()
 
     # # Vérifie si la base DuckDB est vide ou non avant de lancer le run dbt
-    # if not duckdb_empty:
-    #     # Création des vues et export
-    #     dbt_exec("run", profile, "local", config["models_directory"], ".", logger)
-    #     dbt_exec("test", profile, "local", config["models_directory"], ".", logger)
+    if not duckdb_empty:
+        # Création des vues et export
+        dbt_exec("run", profile, "local", config["models_directory"], ".", logger)
+        dbt_exec("test", profile, "local", config["models_directory"], ".", logger)
 
-    #     # Upload les vues
-    #     ddb_loader.connect()
-    #     # ddb_loader.export_csv(config["input_to_download"], date=today)
-    #     ddb_loader.export_csv(config["files_to_upload"], date=today)
-    #     ddb_loader.close()
-    # else:
-    #     logger.error(f"❌ Base {db_config["path"]} vide ")
+        # Upload les vues
+        ddb_loader.connect()
+        # ddb_loader.export_csv(config["input_to_download"], date=today)
+        ddb_loader.export_csv(config["files_to_upload"], date=today)
+        ddb_loader.close()
+    else:
+        logger.error(f"❌ Base {db_config["path"]} vide ")

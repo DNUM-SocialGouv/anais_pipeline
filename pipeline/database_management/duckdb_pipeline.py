@@ -117,7 +117,7 @@ class DuckDBPipeline(DataBasePipeline):
                 """).fetchone()[0]
 
         if table_exists:
-            logging.warning(f"✅ La table '{table_name}' existe déjà.")
+            # logging.warning(f"✅ La table '{table_name}' existe déjà.")
             return True
         else:
             logging.warning(f"❌ La table '{table_name}' n'existe pas.")
@@ -220,6 +220,16 @@ class DuckDBPipeline(DataBasePipeline):
 
         except Exception as e:
             logging.error(f"Erreur lors de la récupération des tables : {e}")
+
+    def is_duckdb_empty(self) -> bool:
+        """ Vérifie si la base DuckDB est vide ou non """
+        result = self.conn.execute("""
+            SELECT COUNT(*) 
+            FROM information_schema.tables 
+            WHERE table_schema NOT IN ('pg_catalog', 'information_schema')
+        """).fetchone()[0]
+        self.conn.close()
+        return result == 0
 
     def fetch_df(self, table_name: str) -> pd.DataFrame:
         """
