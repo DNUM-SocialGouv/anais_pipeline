@@ -10,7 +10,7 @@ from pipeline.database_management.postgres_loader import PostgreSQLLoader
 from pipeline.utils.dbt_tools import dbt_exec
 
 # === Fonctions ===
-def anais_staging_pipeline(profile: str, config: dict, db_config: dict, config_tables: dict, logger: Logger):
+def anais_staging_pipeline(profile: str, config: dict, db_config: dict, logger: Logger):
     """
     Pipeline exécuter pour Staging sur anais.
     Etapes:
@@ -38,7 +38,7 @@ def anais_staging_pipeline(profile: str, config: dict, db_config: dict, config_t
 
     # Récupération des fichiers sur le sftp
     sftp = SFTPSync(config["local_directory_input"], logger)
-    sftp.download_all(config_tables["files_to_download"])
+    sftp.download_all(config["files_to_download"])
 
     # Remplissage des tables de la base postgres
     pg_loader.connect()

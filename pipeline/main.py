@@ -34,7 +34,6 @@ def main(config_var: dict):
     profile = config_var["profile"]
     logger = config_var["logger"]
     config = config_var["config"]
-    config_tables = config_var["config_tables"]
     db_config = config_var["db_config"]
     staging_db_config = config_var["staging_db_config"]
     today = config_var["today"]
@@ -42,7 +41,7 @@ def main(config_var: dict):
     # Exécution des pipelines dépendamment des paramètres d'entrées
     if profile == "Staging":
         if env == "anais":
-            anais_staging_pipeline(profile, config, db_config, config_tables, logger)
+            anais_staging_pipeline(profile, config, db_config, logger)
         if env == "local":
             local_staging_pipeline(profile, config, db_config, logger)
 
