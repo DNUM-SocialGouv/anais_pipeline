@@ -31,10 +31,19 @@ def anais_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
         Fichier de log.
     """
     # Initialisation de la config postgres
+    sql_folder = config.get("create_table_directory", "output_sql/")
+    csv_folder_input = config.get("local_directory_input", "input/")
+    csv_folder_output = config.get("local_directory_output", "output/")
+    print(sql_folder)
+    print(csv_folder_input)
+    print(csv_folder_output)
+
     pg_loader = PostgreSQLLoader(
         db_config=db_config,
-        config=config,
-        logger=logger)
+        sql_folder=sql_folder,
+        csv_folder_input=csv_folder_input,
+        csv_folder_output=csv_folder_output
+        )
 
     # Récupération des fichiers sur le sftp
     sftp = SFTPSync(config["local_directory_input"], logger)
@@ -70,10 +79,21 @@ def local_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
         Fichier de log.
     """
     # Initialisation de la config DuckDB
+    sql_folder = config.get("create_table_directory", "output_sql/")
+    csv_folder_input = config.get("local_directory_input", "input/")
+    csv_folder_output = config.get("local_directory_output", "output/")
+    db_path = db_config.get("path", "data/duckdb_database.duckdb")
+    print(sql_folder)
+    print(csv_folder_input)
+    print(csv_folder_output)
+    print(db_path)
+
     loader = DuckDBPipeline(
         db_config=db_config,
-        config=config,
-        logger=logger)
+        sql_folder=sql_folder,
+        csv_folder_input=csv_folder_input,
+        csv_folder_output=csv_folder_output
+        )
 
     # Remplissage des tables de la base DuckDB
     loader.connect()
@@ -131,11 +151,19 @@ def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_
     """
     # --- Projet ---
     # Initialisation de la config postgres
+    sql_folder = config.get("create_table_directory", "output_sql/")
+    csv_folder_input = config.get("local_directory_input", "input/")
+    csv_folder_output = config.get("local_directory_output", "output/")
+    print(sql_folder)
+    print(csv_folder_input)
+    print(csv_folder_output)
+
     pg_loader = PostgreSQLLoader(
         db_config=db_config,
-        config=config,
-        logger=logger,
-        staging_db_config=staging_db_config)
+        sql_folder=sql_folder,
+        csv_folder_input=csv_folder_input,
+        csv_folder_output=csv_folder_output
+        )
 
     # # Remplissage des tables de la base postgres
     pg_loader.connect()
@@ -185,11 +213,20 @@ def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_
         Fichier de log.
     """
     # Initialisation de la config DuckDB
-    ddb_loader = DuckDBPipeline(
+    sql_folder = config.get("create_table_directory", "output_sql/")
+    csv_folder_input = config.get("local_directory_input", "input/")
+    csv_folder_output = config.get("local_directory_output", "output/")
+    db_path = db_config.get("path", "data/duckdb_database.duckdb")
+    print(sql_folder)
+    print(csv_folder_input)
+    print(csv_folder_output)
+    print(db_path)
+
+    loader = DuckDBPipeline(
         db_config=db_config,
-        config=config,
-        logger=logger,
-        staging_db_config=staging_db_config
+        sql_folder=sql_folder,
+        csv_folder_input=csv_folder_input,
+        csv_folder_output=csv_folder_output
         )
 
     # Remplissage des tables de la base postgres  

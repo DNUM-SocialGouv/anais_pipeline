@@ -23,10 +23,11 @@ logging.basicConfig(
 # Classe DuckDBPipeline qui gère les actions relatives à une database duckdb
 class DuckDBPipeline(DataBasePipeline):
     def __init__(self,
-                sql_folder: str = "Staging/output_sql/",
+                db_config: dict,
+                sql_folder: str = "output_sql/",
                 csv_folder_input: str = "input/",
-                csv_folder_output: str = "output/",
-                db_path: str = 'data/duckdb_database.duckdb'):
+                csv_folder_output: str = "output/"
+                ):
         """
         Initialisation de la base DuckDB. Classe héritière de DataBasePipeline.
 
@@ -44,9 +45,9 @@ class DuckDBPipeline(DataBasePipeline):
         super().__init__(sql_folder=sql_folder,
                          csv_folder_input=csv_folder_input,
                          csv_folder_output=csv_folder_output)
-        self.db_path = db_path
-        self.schema = "local"
-        self.typedb = "duckdb"
+        self.db_path = db_config.get("path")
+        self.schema = db_config.get("schema")
+        self.typedb = db_config.get("type")
         self.init_duckdb()
         self.conn = duckdb.connect(database=self.db_path)
 
