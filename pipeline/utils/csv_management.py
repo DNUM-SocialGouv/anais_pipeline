@@ -218,6 +218,22 @@ class StandardizeColnames:
             return shortened
         return text
 
+    def remove_unnamed_columns(self):
+        """
+        Supprime les colonnes sans nom (ex. '', 'Unnamed: 0', 'Unnamed: 1', ...).
+        """
+        cols_to_drop = [
+            col for col in self.df.columns
+            if (
+                (isinstance(col, str) and col.strip() == "")
+                or (isinstance(col, str) and col.lower().startswith("unnamed:"))
+            )
+        ]
+
+        if cols_to_drop:
+            self.df.drop(columns=cols_to_drop, inplace=True)
+            logging.info(f"🗑️ Colonnes supprimées : {cols_to_drop}")
+
     def standardize_column_names(self):
         """
         Standardise le nom des colonnes:
@@ -227,6 +243,8 @@ class StandardizeColnames:
             - Applique la miniscule
             - Réduit le nombre de caractère total à 63 (max)
         """
+        self.remove_unnamed_columns()
+        
         new_columns = []
         for col in self.df.columns:
             logging.warning(f"{col}")
