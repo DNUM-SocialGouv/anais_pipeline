@@ -88,7 +88,7 @@ def local_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
     print(csv_folder_output)
     print(db_path)
 
-    loader = DuckDBPipeline(
+    ddb_loader = DuckDBPipeline(
         db_config=db_config,
         sql_folder=sql_folder,
         csv_folder_input=csv_folder_input,
@@ -96,11 +96,11 @@ def local_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
         )
 
     # Remplissage des tables de la base DuckDB
-    loader.connect()
+    ddb_loader.connect()
     try:
         # Si la base duckDB Staging existe
         if os.listdir(config["local_directory_input"]) and os.listdir(config["create_table_directory"]):
-            loader.run()
+            ddb_loader.run()
             
         else:
             logger.error(
@@ -110,8 +110,8 @@ def local_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
             f"    > .sql : {config['create_table_directory']}"
         )
     finally:
-        duckdb_empty = loader.is_duckdb_empty()
-        loader.close()
+        duckdb_empty = ddb_loader.is_duckdb_empty()
+        ddb_loader.close()
 
     # Vérifie si la base DuckDB est vide ou non avant de lancer le run dbt
     if not duckdb_empty:
@@ -222,7 +222,7 @@ def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_
     print(csv_folder_output)
     print(db_path)
 
-    loader = DuckDBPipeline(
+    ddb_loader = DuckDBPipeline(
         db_config=db_config,
         sql_folder=sql_folder,
         csv_folder_input=csv_folder_input,
