@@ -49,7 +49,6 @@ class DuckDBPipeline(DataBasePipeline):
         self.schema = db_config.get("schema")
         self.typedb = db_config.get("type")
         self.init_duckdb()
-        self.conn = duckdb.connect(database=self.db_path)
 
     def init_duckdb(self):
         """ Vérifie si la base DuckDB existe, sinon la crée. """
@@ -59,6 +58,11 @@ class DuckDBPipeline(DataBasePipeline):
             conn.close()
         else:
             logging.info("La base DuckDB existe déjà.")
+
+    def connect(self):
+        """ Connexion à la base DuckDB. """
+        self.logger.info("Connexion à la base DuckDB.")
+        self.conn = duckdb.connect(database=self.db_path)
 
     def create_table(self, conn, sql_query: str, query_params: dict):
         """

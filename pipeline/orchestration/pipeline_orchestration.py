@@ -91,7 +91,7 @@ def local_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
         )
 
     # Remplissage des tables de la base DuckDB
-    # ddb_loader.connect()
+    ddb_loader.connect()
     # Si la base duckDB Staging existe
     if os.listdir(config["local_directory_input"]) and os.listdir(config["create_table_directory"]):
         ddb_loader.run()
@@ -104,6 +104,7 @@ def local_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
         f"    > .sql : {config['create_table_directory']}"
     )
     duckdb_empty = ddb_loader.is_duckdb_empty()
+    ddb_loader.close()
 
     # Vérifie si la base DuckDB est vide ou non avant de lancer le run dbt
     if not duckdb_empty:
@@ -112,7 +113,7 @@ def local_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
         dbt_exec("test", profile, "anais", config["models_directory"], ".", logger)
     else:
         logger.error(f"❌ Base {db_config["path"]} vide ")
-    ddb_loader.close()
+    
 
 
 def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_db_config: dict, today: str, logger: Logger):
@@ -220,7 +221,7 @@ def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_
         )
 
     # Remplissage des tables de la base postgres  
-    # ddb_loader.connect()
+    ddb_loader.connect()
 
     # # Si la base duckDB Staging existe
     # if os.path.isfile(staging_db_config["path"]):
@@ -237,6 +238,7 @@ def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_
         f"    > .sql : {config['create_table_directory']}"
     )
     duckdb_empty = ddb_loader.is_duckdb_empty()
+    ddb_loader.close()
 
     # # Vérifie si la base DuckDB est vide ou non avant de lancer le run dbt
     if not duckdb_empty:
@@ -245,7 +247,7 @@ def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_
         dbt_exec("test", profile, "local", config["models_directory"], ".", logger)
 
         # Upload les vues
-        # ddb_loader.connect()
+        ddb_loader.connect()
         # ddb_loader.export_csv(config["input_to_download"], date=today)
         ddb_loader.export_csv(config["files_to_upload"], date=today)
     else:
