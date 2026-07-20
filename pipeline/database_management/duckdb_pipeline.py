@@ -61,7 +61,7 @@ class DuckDBPipeline(DataBasePipeline):
 
     def connect(self):
         """ Connexion à la base DuckDB. """
-        self.logger.info("Connexion à la base DuckDB.")
+        logging.info("Connexion à la base DuckDB.")
         self.conn = duckdb.connect(database=self.db_path)
 
     def create_table(self, conn, sql_query: str, query_params: dict):
