@@ -248,7 +248,6 @@ def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_
         # ddb_loader.connect()
         # ddb_loader.export_csv(config["input_to_download"], date=today)
         ddb_loader.export_csv(config["files_to_upload"], date=today)
-        ddb_loader.close()
     else:
         logger.error(f"❌ Base {db_config["path"]} vide ")
-        ddb_loader.close()
+    ddb_loader.close()
