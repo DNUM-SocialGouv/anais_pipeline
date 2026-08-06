@@ -5,6 +5,9 @@ from paramiko import SFTPAttributes, SSHClient, AutoAddPolicy
 import datetime
 from dotenv import load_dotenv
 from typing import Tuple, Optional, List, Dict
+import posixpath
+import re
+from stat import S_ISDIR
 
 # Modules
 from pipeline.utils.csv_management import TransformExcel
@@ -100,7 +103,7 @@ class SFTPSync:
             files = self.sftp.listdir_attr(remote_dir)
             matching_files = [
                 f for f in files
-                if keyword in f.filename and not f.filename.endswith((".gpg", ".xlsx"))
+                if keyword in f.filename and not f.filename.endswith((".gpg"))
             ]
             if 'DIAMANT' in remote_dir:
                 matching_files = [
@@ -114,6 +117,55 @@ class SFTPSync:
         except FileNotFoundError:
             logging.warning(f"Dossier introuvable : {remote_dir}")
             return None
+
+    def resolve_last_date_directory(self, remote_dir: str) -> str:
+        """
+        Remplace '<last_date>' par le sous-répertoire le plus récent
+        au format YYYYmmdd.
+
+        Exemple
+        -------
+        '/SCN_BDD/CERTELEC_DC/input/<last_date>'
+        ->
+        '/SCN_BDD/CERTELEC_DC/input/20260605'
+        """
+        if "<last_date>" not in remote_dir:
+            return remote_dir
+
+        parent_dir = posixpath.dirname(remote_dir)
+
+        try:
+            entries = self.sftp.listdir_attr(parent_dir)
+
+            date_dirs = [
+                entry.filename
+                for entry in entries
+                if (
+                    S_ISDIR(entry.st_mode)
+                    and re.fullmatch(r"\d{8}", entry.filename)
+                )
+            ]
+
+            if not date_dirs:
+                raise FileNotFoundError(
+                    f"Aucun dossier au format YYYYmmdd trouvé dans {parent_dir}"
+                )
+
+            latest_dir = max(date_dirs)
+
+            resolved = remote_dir.replace("<last_date>", latest_dir)
+
+            logging.info(
+                f"Répertoire <last_date> résolu : {resolved}"
+            )
+
+            return resolved
+
+        except Exception as e:
+            logging.error(
+                f"Impossible de résoudre <last_date> dans {remote_dir} : {e}"
+            )
+            raise
 
     def download_file(self, remote_dir: str, local_path: str):
         """
@@ -153,6 +205,8 @@ class SFTPSync:
 
         # Boucle parcourant chaque fichier à télécharger
         for remote_dir, keyword, local_filename in files_to_download:
+            remote_dir = self.resolve_last_date_directory(remote_dir)
+
             logging.info(f"Recherche du fichier contenant '{keyword}' dans {remote_dir}")
             latest_file = self.get_latest_file(remote_dir, keyword)
 
