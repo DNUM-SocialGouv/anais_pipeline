@@ -1,9 +1,11 @@
 # === Packages ===
+from abc import ABC, abstractmethod
 import os
 from pathlib import Path
 from typing import Callable, Any
 import re
 from logging import Logger
+import pandas as pd
 
 # === Modules ===
 from pipeline.utils.csv_management import TableInCsv
@@ -11,7 +13,7 @@ from pipeline.utils.csv_management import TableInCsv
 
 # === Classes ===
 # Classe DataBasePipeline qui gère les actions relatives à n'importe quel database
-class DataBasePipeline:
+class DataBasePipeline(ABC):
     def __init__(self, db_config: dict, config: dict, logger: Logger, staging_db_config: dict = None):
         """
         Classe qui réalise les actions communes pour n'importe quel database.
@@ -20,11 +22,7 @@ class DataBasePipeline:
             - self.conn = connexion à la base de données
             - self.schema = schéma de la base de données
             - self.typedb = type de la base de données
-            - is_table_exist(self, conn, query_params: dict, print_log: bool) -> bool = fonction qui vérifie l'existence de la table
-            - show_row_count(self, conn, query_params: dict) = fonction qui compte le nombre de lignes de la table
-            - print_table(self, conn, query_params: dict, limit: int) = fonction qui affiche la table
-            - create_table(self, conn, sql_query: str, query_params: str) = fonction d'exécution des fichier SQL de CREATE TABLE
-            - load_csv_file(self, conn, csv_file: Path) = fonction d'injection des données d'un csv vers une table de la base de données
+            - les méthodes abstraites
 
         Parameters
         ----------
@@ -44,6 +42,65 @@ class DataBasePipeline:
         self.staging_db_config = staging_db_config
         self.logger = logger
         self.ensure_directories_exist()
+
+    @abstractmethod
+    def is_table_exist(self, conn, query_params: dict, print_log: bool) -> bool:
+        ...
+        # vérifie l'existence de la table
+
+    @abstractmethod
+    def show_row_count(self, conn, query_params: dict):
+        ...
+        # compte le nombre de lignes de la table
+
+    @abstractmethod
+    def print_table(self, conn, query_params: dict, limit: int):
+        ...
+        # affiche la table
+
+    @abstractmethod
+    def create_table(self, conn, sql_query: str, query_params: str):
+        ...
+        # fonction d'exécution des fichier SQL de CREATE TABLE
+
+    @abstractmethod
+    def drop_table(self, conn, query_params: str):
+        ...
+        # fonction d'exécution des fichier SQL de DROP TABLE
+
+    @abstractmethod
+    def load_csv_file(self, conn, csv_file: Path):
+        ...
+        # fonction d'injection des données d'un csv vers une table de la base de données
+
+    @abstractmethod
+    def copy_table_from_staging(self, conn, staging_table_name: str, db_table_name: str):
+        ...
+        # copie une table depuis le staging vers la db
+
+    @abstractmethod
+    def copy_table_into_new(self, conn, source: str, target: str): ...
+
+    @abstractmethod
+    def append_table(self, conn, source: str, target: str): ...
+
+    @abstractmethod
+    def add_current_date(self, conn, table_name: str, column_name: str): ...
+
+    @abstractmethod
+    def drop_column(self, conn, table_name: str, column_name: str): ...
+
+    @abstractmethod
+    def truncate_table(self, conn, table_name: str): ...
+
+    @abstractmethod
+    def reset_histo(self): ...
+
+    @abstractmethod
+    def fetch_df(self, conn, table_name: str) -> pd.DataFrame: ...
+
+    @abstractmethod
+    def connect(self): ...
 
     def ensure_directories_exist(self):
         """ Crée les dossiers nécessaires s'ils n'existent pas. """
