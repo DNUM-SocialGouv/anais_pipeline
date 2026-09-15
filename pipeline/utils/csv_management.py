@@ -1,13 +1,14 @@
 # === Packages ===
-import pandas as pd
 import csv
 import os
-from io import StringIO
 import re
 import unicodedata
 from collections.abc import Callable
-from pathlib import Path
+from io import StringIO
 from logging import Logger
+from pathlib import Path
+
+import pandas as pd
 
 
 # === Classes ===

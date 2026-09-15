@@ -1,7 +1,8 @@
 # === Packages ===
-from dotenv import load_dotenv
 import argparse
-from datetime import date
+from datetime import datetime, timezone
+
+from dotenv import load_dotenv
 
 # === Modules ===
 from pipeline.utils.load_yml import load_metadata_YAML
@@ -91,7 +92,7 @@ def setup_config(
     staging_db_config = load_metadata_YAML(profile_yml, "Staging", logger, ".")[
         "outputs"
     ][env]
-    today = date.strftime(date.today(), "%Y_%m_%d")
+    today = datetime.now(tz=timezone.utc).strftime("%Y_%m_%d")
 
     config_var["logger"] = logger
     config_var["config"] = config

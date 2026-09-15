@@ -1,10 +1,10 @@
 # === Packages ===
-from abc import ABC, abstractmethod
 import os
-from pathlib import Path
-from typing import Callable, Any
 import re
+from abc import ABC, abstractmethod
 from logging import Logger
+from pathlib import Path
+
 import pandas as pd
 
 # === Modules ===
@@ -19,7 +19,7 @@ class DataBasePipeline(ABC):
         db_config: dict,
         config: dict,
         logger: Logger,
-        staging_db_config: dict = None,
+        staging_db_config: dict | None = None,
     ):
         """
         Classe qui réalise les actions communes pour n'importe quel database.

@@ -1,14 +1,16 @@
 # === Packages ===
-import pandas as pd
-from sqlalchemy import create_engine, inspect, text
-from dotenv import load_dotenv
-from pathlib import Path
 import urllib.parse
 from logging import Logger
+from pathlib import Path
+
+import pandas as pd
+from dotenv import load_dotenv
+from sqlalchemy import create_engine, inspect, text
+
+from pipeline.database_management.database_pipeline import DataBasePipeline
 
 # === Modules ===
 from pipeline.utils.csv_management import ColumnsManagement
-from pipeline.database_management.database_pipeline import DataBasePipeline
 from pipeline.utils.load_yml import resolve_env_var
 
 # === Chargement des variables d’environnement ===
@@ -23,7 +25,7 @@ class PostgreSQLLoader(DataBasePipeline):
         db_config: dict,
         config: dict,
         logger: Logger,
-        staging_db_config: dict = None,
+        staging_db_config: dict | None = None,
     ):
         """
         Initialisation de la base Postgres. Classe héritière de DataBasePipeline.
@@ -415,7 +417,7 @@ class PostgreSQLLoader(DataBasePipeline):
         source_cols = [
             row[0]
             for row in conn.execute(
-                text(f"""
+                text("""
             SELECT column_name
             FROM information_schema.columns
             WHERE table_name = :source
@@ -429,7 +431,7 @@ class PostgreSQLLoader(DataBasePipeline):
         target_cols = [
             row[0]
             for row in conn.execute(
-                text(f"""
+                text("""
             SELECT column_name
             FROM information_schema.columns
             WHERE table_name = :target

@@ -1,14 +1,15 @@
 # === Packages ===
-import os
-from paramiko import SFTPClient, Transport, SFTPAttributes
 import datetime
-from dotenv import load_dotenv
-from typing import Optional, List, Dict
+import os
 from logging import Logger
+
+from dotenv import load_dotenv
+from paramiko import SFTPAttributes, SFTPClient, Transport
+
+from pipeline.utils.config import env_var, setup_config
 
 # === Modules ===
 from pipeline.utils.csv_management import TransformExcel
-from pipeline.utils.config import env_var, setup_config
 
 
 # === Classes ===
@@ -63,12 +64,12 @@ class SFTPSync:
         try:
             self.sftp.chdir(path)
             return True
-        except IOError:
+        except OSError:
             return False
 
     def get_latest_file(
         self, remote_dir: str, keyword: str
-    ) -> Optional[SFTPAttributes]:
+    ) -> SFTPAttributes | None:
         """
         Sur le SFTP, récupère le fichier le plus récent contenant la chaine de caractère définie.
 
@@ -95,7 +96,7 @@ class SFTPSync:
                 matching_files = [
                     f
                     for f in files
-                    if keyword in f.filename and not f.filename.endswith((".gpg"))
+                    if keyword in f.filename and not f.filename.endswith(".gpg")
                 ]
             if not matching_files:
                 self.logger.warning(
@@ -124,7 +125,7 @@ class SFTPSync:
         except Exception as e:
             self.logger.error(f"Échec du téléchargement {remote_dir} : {e}")
 
-    def download_all(self, files_list: List[Dict[str, str]]):
+    def download_all(self, files_list: list[dict[str, str]]):
         """
         Téléchargement de tous les fichiers indiqués dans files_list, depuis le SFTP.
         Les fichiers sont enregistrés sous format csv dans un fichier local.
@@ -189,7 +190,7 @@ class SFTPSync:
             if not self.sftp_dir_exists(remote_dir):
                 self.logger.error(f"❌ Répertoire SFTP inexistant : {remote_dir}")
             else:
-                for _, csv_name in views_to_export.items():
+                for csv_name in views_to_export.values():
                     # Récupère le nom du fichier csv
                     file_name = f"{csv_name}_{date}.csv"
                     local_path = os.path.join(output_dir, file_name)

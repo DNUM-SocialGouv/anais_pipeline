@@ -1,13 +1,14 @@
 # === Packages ===
-from logging import Logger
 import os
 import os.path
+from logging import Logger
 
-# === Modules ===
-from pipeline.utils.sftp_sync import SFTPSync
 from pipeline.database_management.duckdb_pipeline import DuckDBPipeline
 from pipeline.database_management.postgres_loader import PostgreSQLLoader
 from pipeline.utils.dbt_tools import dbt_exec
+
+# === Modules ===
+from pipeline.utils.sftp_sync import SFTPSync
 
 
 # === Fonctions ===

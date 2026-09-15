@@ -1,9 +1,9 @@
 # === Packages ===
 import os
-from pathlib import Path
 import subprocess
-from typing import Literal
 from logging import Logger
+from pathlib import Path
+from typing import Literal
 
 # === Modules ===
 from pipeline.utils.config import env_var, setup_config
@@ -50,7 +50,7 @@ def dbt_exec(
             not os.path.exists(os.path.join(project_path, "package-lock.yml"))
             and install_deps
         ):
-            dbt_deps_install = dbt_deps(project_path)
+            dbt_deps(project_path)
 
         result = subprocess.run(
             [

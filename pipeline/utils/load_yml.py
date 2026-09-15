@@ -1,9 +1,10 @@
 # === Packages ===
 import os
-from pathlib import Path
-import yaml
 import re
 from logging import Logger
+from pathlib import Path
+
+import yaml
 
 
 # === Fonctions ===
@@ -59,7 +60,7 @@ def load_YAML(file_name: str, config_file_dir: str, logger: Logger) -> dict:
 
 
 def load_metadata_YAML(
-    file_name: str, table: str, logger: Logger, config_file_dir: str = None
+    file_name: str, table: str, logger: Logger, config_file_dir: str | None = None
 ) -> dict:
     """
     Charge le fichier de configuration et récupère la liste des colonnes d'une table donnée.

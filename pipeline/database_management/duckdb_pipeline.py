@@ -1,13 +1,15 @@
 # === Packages ===
-import duckdb
 import os
-from pathlib import Path
-import pandas as pd
 from logging import Logger
+from pathlib import Path
+
+import duckdb
+import pandas as pd
+
+from pipeline.database_management.database_pipeline import DataBasePipeline
 
 # === Modules ===
 from pipeline.utils.csv_management import ColumnsManagement
-from pipeline.database_management.database_pipeline import DataBasePipeline
 
 
 # === Classes ===
@@ -18,7 +20,7 @@ class DuckDBPipeline(DataBasePipeline):
         db_config: dict,
         config: dict,
         logger: Logger,
-        staging_db_config: dict = None,
+        staging_db_config: dict | None = None,
     ):
         """
         Initialisation de la base DuckDB. Classe héritière de DataBasePipeline.
@@ -207,7 +209,7 @@ class DuckDBPipeline(DataBasePipeline):
         pipeline = ColumnsManagement(
             csv_file=csv_file, schema_df=schema_df, logger=self.logger
         )
-        df = pipeline.df
+        df = pipeline.df  # noqa
 
         # Vérification de la présence de la table
         row_count = conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
@@ -287,8 +289,6 @@ class DuckDBPipeline(DataBasePipeline):
             Nom de la table que l'on "colle".
         """
         if self.staging_db_config:
-            query_params = {"schema": self.schema, "table": db_table_name}
-
             # Récupération de la table dans Staging
             staging_db_path = Path(self.staging_db_config.get("path"))
 
@@ -485,7 +485,7 @@ class DuckDBPipeline(DataBasePipeline):
         schema = self.schema
 
         # Récupération des tables
-        query = f"""
+        query = """
             SELECT table_name
             FROM information_schema.tables
             WHERE table_schema = ?
