@@ -14,7 +14,13 @@ from pipeline.utils.csv_management import TableInCsv
 # === Classes ===
 # Classe DataBasePipeline qui gère les actions relatives à n'importe quel database
 class DataBasePipeline(ABC):
-    def __init__(self, db_config: dict, config: dict, logger: Logger, staging_db_config: dict = None):
+    def __init__(
+        self,
+        db_config: dict,
+        config: dict,
+        logger: Logger,
+        staging_db_config: dict = None,
+    ):
         """
         Classe qui réalise les actions communes pour n'importe quel database.
         Cette classe est héritée par une classe relative au type de base.
@@ -74,7 +80,9 @@ class DataBasePipeline(ABC):
         # fonction d'injection des données d'un csv vers une table de la base de données
 
     @abstractmethod
-    def copy_table_from_staging(self, conn, staging_table_name: str, db_table_name: str):
+    def copy_table_from_staging(
+        self, conn, staging_table_name: str, db_table_name: str
+    ):
         ...
         # copie une table depuis le staging vers la db
 
@@ -103,7 +111,7 @@ class DataBasePipeline(ABC):
     def connect(self): ...
 
     def ensure_directories_exist(self):
-        """ Crée les dossiers nécessaires s'ils n'existent pas. """
+        """Crée les dossiers nécessaires s'ils n'existent pas."""
         folders = [self.sql_folder, self.csv_folder_input, self.csv_folder_output]
 
         for folder in folders:
@@ -122,7 +130,7 @@ class DataBasePipeline(ABC):
         Returns
         -------
         str
-            Contenu du fichier SQL.      
+            Contenu du fichier SQL.
         """
         with open(sql_file, "r", encoding="utf-8") as f:
             return f.read()
@@ -143,7 +151,7 @@ class DataBasePipeline(ABC):
         """
         match = re.compile(
             r"CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?(?P<name>(\"[^\"]+\"|\w+))",
-            re.IGNORECASE
+            re.IGNORECASE,
         ).search(sql_file)
 
         if match:
@@ -157,7 +165,7 @@ class DataBasePipeline(ABC):
         conn,
         query_params: dict,
         print_table: bool = False,
-        show_row_count: bool = False
+        show_row_count: bool = False,
     ) -> bool:
         """
         Vérifie l'existence d'une table, son nombre de ligne (optionnel) et affiche son contenu (optionnel).
@@ -193,7 +201,9 @@ class DataBasePipeline(ABC):
             return table_exist
 
         except Exception as e:
-            self.logger.error(f"❌ Erreur lors de la vérification de la table '{query_params["table"]}' → {e}")
+            self.logger.error(
+                f"❌ Erreur lors de la vérification de la table '{query_params['table']}' → {e}"
+            )
             return False
 
     def execute_sql_file(self, conn, sql_file: Path):
@@ -211,7 +221,9 @@ class DataBasePipeline(ABC):
         table_name = self.find_table_name_in_sql(sql)
 
         if not table_name:
-            self.logger.info(f"❌ Nom de table introuvable dans le fichier SQL : '{sql_file.name}'")
+            self.logger.info(
+                f"❌ Nom de table introuvable dans le fichier SQL : '{sql_file.name}'"
+            )
             return
         else:
             query_params = {"schema": self.schema, "table": table_name}
@@ -225,7 +237,9 @@ class DataBasePipeline(ABC):
                 self.create_table(conn, sql, query_params)
                 self.logger.info(f"✅ Table créée avec succès : {sql_file.name}")
             except Exception as e:
-                self.logger.error(f"❌ Erreur lors de l'exécution du SQL {sql_file.name}: {e}")
+                self.logger.error(
+                    f"❌ Erreur lors de l'exécution du SQL {sql_file.name}: {e}"
+                )
 
     def copy_table(self, views_to_import: dict):
         """
@@ -238,7 +252,9 @@ class DataBasePipeline(ABC):
         """
         for staging_table_name, db_table_name in views_to_import.items():
             if staging_table_name:
-                self.copy_table_from_staging(self.conn, staging_table_name, db_table_name)
+                self.copy_table_from_staging(
+                    self.conn, staging_table_name, db_table_name
+                )
             else:
                 self.logger.warning("⚠️ Aucune table spécifiée")
 
@@ -256,19 +272,21 @@ class DataBasePipeline(ABC):
         table_name = query_params["table"]
         table_name_histo = f"z{table_name}"
         query_params_histo = query_params.copy()
-        query_params_histo['table'] = table_name_histo
+        query_params_histo["table"] = table_name_histo
 
         try:
             # Création de la table historique
             if not self.is_table_exist(conn, query_params_histo):
                 self.copy_table_into_new(conn, table_name, table_name_histo)
-            
-            elif self.is_table_exist(conn, query_params_histo):
-                self.append_table(conn, table_name, table_name_histo) 
 
-            # Ajout de la date du jour dans la table historique  
+            elif self.is_table_exist(conn, query_params_histo):
+                self.append_table(conn, table_name, table_name_histo)
+
+            # Ajout de la date du jour dans la table historique
             self.add_current_date(conn, table_name_histo, "date_ingestion")
-            self.logger.info(f"✅ Données de {table_name} historisées avec succès dans {table_name_histo}")
+            self.logger.info(
+                f"✅ Données de {table_name} historisées avec succès dans {table_name_histo}"
+            )
 
         except Exception as e:
             self.logger.error(f"❌ Erreur lors de l'historisation : {e}")
@@ -286,7 +304,14 @@ class DataBasePipeline(ABC):
         conn = self.conn
         for table_name, csv_name in views_to_import.items():
             if table_name:
-                transfo = TableInCsv(conn, table_name, csv_name, self.fetch_df, self.csv_folder_input, self.logger)
+                transfo = TableInCsv(
+                    conn,
+                    table_name,
+                    csv_name,
+                    self.fetch_df,
+                    self.csv_folder_input,
+                    self.logger,
+                )
                 transfo.import_to_csv()
             else:
                 self.logger.warning("⚠️ Aucune table spécifiée")
@@ -303,13 +328,22 @@ class DataBasePipeline(ABC):
             Date présente dans le nom des fichiers à exporter.
         """
         if not views_to_export:
-            self.logger.warning("⚠️ Aucun mapping de vues à exporter (views_to_export est vide ou None)")
+            self.logger.warning(
+                "⚠️ Aucun mapping de vues à exporter (views_to_export est vide ou None)"
+            )
             return
 
         conn = self.conn
         for table_name, csv_name in views_to_export.items():
             if table_name:
-                transfo = TableInCsv(conn, table_name, csv_name, self.fetch_df, self.csv_folder_output, self.logger)
+                transfo = TableInCsv(
+                    conn,
+                    table_name,
+                    csv_name,
+                    self.fetch_df,
+                    self.csv_folder_output,
+                    self.logger,
+                )
                 transfo.export_to_csv(date=date)
             else:
                 self.logger.warning("⚠️ Aucune table spécifiée")
@@ -336,8 +370,8 @@ class DataBasePipeline(ABC):
             # Historisation
             self.historise_table(conn, query_params)
 
-            self.check_table(conn, query_params, print_table=False, show_row_count = True)
+            self.check_table(conn, query_params, print_table=False, show_row_count=True)
 
             # Vérification des données l'historique
             query_params = {"schema": self.schema, "table": f"z{csv_file.stem}"}
-            self.check_table(conn, query_params, print_table=False, show_row_count = True)
+            self.check_table(conn, query_params, print_table=False, show_row_count=True)
