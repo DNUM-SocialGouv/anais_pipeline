@@ -1,5 +1,3 @@
-# === Packages ===
-
 # === Modules ===
 from pipeline.orchestration.pipeline_orchestration import (
     anais_project_pipeline,

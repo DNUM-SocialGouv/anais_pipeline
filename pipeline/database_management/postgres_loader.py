@@ -7,9 +7,8 @@ import pandas as pd
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, inspect, text
 
-from pipeline.database_management.database_pipeline import DataBasePipeline
-
 # === Modules ===
+from pipeline.database_management.database_pipeline import DataBasePipeline
 from pipeline.utils.csv_management import ColumnsManagement
 from pipeline.utils.load_yml import resolve_env_var
 

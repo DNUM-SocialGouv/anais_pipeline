@@ -6,9 +6,8 @@ from logging import Logger
 from dotenv import load_dotenv
 from paramiko import SFTPAttributes, SFTPClient, Transport
 
-from pipeline.utils.config import env_var, setup_config
-
 # === Modules ===
+from pipeline.utils.config import env_var, setup_config
 from pipeline.utils.csv_management import TransformExcel
 
 

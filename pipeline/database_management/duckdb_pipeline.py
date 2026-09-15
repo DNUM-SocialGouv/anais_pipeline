@@ -6,9 +6,8 @@ from pathlib import Path
 import duckdb
 import pandas as pd
 
-from pipeline.database_management.database_pipeline import DataBasePipeline
-
 # === Modules ===
+from pipeline.database_management.database_pipeline import DataBasePipeline
 from pipeline.utils.csv_management import ColumnsManagement
 
 
