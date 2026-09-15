@@ -6,7 +6,6 @@ build-backend = "hatchling.build"
 name = "pipeline"
 version = "0.1.0"
 description = "Package pipeline anais"
-authors = [{ name = "Ton Nom", email = "ton.email@exemple.com" }]
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [
@@ -18,8 +17,13 @@ dependencies = [
     "dotenv>=0.9.9",
     "sqlalchemy>=2.0.41",
     "paramiko>=3.5.1",
-    "psycopg2>=2.9.10",
+    "psycopg2-binary>=2.9.10",
     "dbt-postgres>=1.9.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.7",
 ]
 
 [tool.hatch.build.targets.wheel]
