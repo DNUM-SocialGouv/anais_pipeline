@@ -9,11 +9,11 @@ description = "Package pipeline anais"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "duckdb (==1.2.0)",
-    "dbt-core (==1.9.2)",
-    "dbt-duckdb (==1.9.2)",
-    "pandas (==2.2.3)",
-    "dlt (==1.6.1)",
+    "duckdb==1.2.0",
+    "dbt-core==1.9.2",
+    "dbt-duckdb==1.9.2",
+    "pandas==2.2.3",
+    "dlt==1.6.1",
     "dotenv>=0.9.9",
     "sqlalchemy>=2.0.41",
     "paramiko>=3.5.1",
