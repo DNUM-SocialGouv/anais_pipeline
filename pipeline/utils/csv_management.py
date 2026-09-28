@@ -1,13 +1,14 @@
 # === Packages ===
-import pandas as pd
 import csv
 import os
-from io import StringIO
 import re
 import unicodedata
 from collections.abc import Callable
-from pathlib import Path
+from io import StringIO
 from logging import Logger
+from pathlib import Path
+
+import pandas as pd
 
 
 # === Classes ===
@@ -59,17 +60,21 @@ class TransformExcel:
         """
         try:
             # Conversion du fichier excel vers du csv
-            self.df = pd.read_excel(self.local_xlsx_path, engine='openpyxl')
+            self.df = pd.read_excel(self.local_xlsx_path, engine="openpyxl")
             self.fill()
             self.TCD_management()
-            self.df.index.names = ['Column1']
+            self.df.index.names = ["Column1"]
             self.df.to_csv(self.local_csv_path, sep=";", quoting=csv.QUOTE_NONNUMERIC)
 
             # Suppression du fichier Excel
             os.remove(self.local_xlsx_path)
-            self.logger.info(f"Fichier remplacé par un csv : {self.local_xlsx_path} -> {self.local_csv_path}")
+            self.logger.info(
+                f"Fichier remplacé par un csv : {self.local_xlsx_path} -> {self.local_csv_path}"
+            )
         except Exception as e:
-            self.logger.warning(f"⚠️ Erreur lors de la suppression de {self.local_xlsx_path} : {e}")
+            self.logger.warning(
+                f"⚠️ Erreur lors de la suppression de {self.local_xlsx_path} : {e}"
+            )
 
 
 class ReadCsvWithDelimiter:
@@ -92,15 +97,17 @@ class ReadCsvWithDelimiter:
         self.dialect = self.detect_delimiter()
 
     def detect_delimiter(self):
-        """ Détecte automatiquement le délimiteur du fichier csv. """
+        """Détecte automatiquement le délimiteur du fichier csv."""
         try:
-            with open(self.file_path, 'r', encoding='utf-8-sig') as f:
+            with open(self.file_path, "r", encoding="utf-8-sig") as f:
                 sample = f.read(self.sample_size)
                 sniffer = csv.Sniffer()
                 dialect = sniffer.sniff(sample, delimiters="¤;,")
                 return dialect.delimiter
         except Exception as e:
-            self.logger.warning(f"⚠️ Impossible de détecter le délimiteur pour {self.file_path} : {e} → ';' utilisé par défaut.")
+            self.logger.warning(
+                f"⚠️ Impossible de détecter le délimiteur pour {self.file_path} : {e} → ';' utilisé par défaut."
+            )
             return ";"
 
     def read_csv_resilient(self) -> pd.DataFrame:
@@ -121,18 +128,24 @@ class ReadCsvWithDelimiter:
                     delimiter=delimiter,
                     dtype=str,
                     quotechar='"',
-                    encoding='utf-8-sig'
+                    encoding="utf-8-sig",
                 )
-                self.logger.info(f"✅ Lecture réussie avec le délimiteur '{delimiter}' pour {os.path.basename(self.file_path)}")
+                self.logger.info(
+                    f"✅ Lecture réussie avec le délimiteur '{delimiter}' pour {os.path.basename(self.file_path)}"
+                )
                 return df
             except pd.errors.ParserError as e:
-                self.logger.warning(f"⚠️ Erreur de parsing avec '{delimiter}' pour {self.file_path} → {e}")
+                self.logger.warning(
+                    f"⚠️ Erreur de parsing avec '{delimiter}' pour {self.file_path} → {e}"
+                )
             except Exception as e:
                 self.logger.warning(f"⚠️ Autre erreur avec '{delimiter}' → {e}")
 
-        raise ValueError(f"❌ Impossible de lire le fichier CSV {self.file_path} avec les délimiteurs connus.")
+        raise ValueError(
+            f"❌ Impossible de lire le fichier CSV {self.file_path} avec les délimiteurs connus."
+        )
 
-    def read_csv_with_custom_delimiter(self, delimiter: str) -> pd.DataFrame :
+    def read_csv_with_custom_delimiter(self, delimiter: str) -> pd.DataFrame:
         """
         Test la lecture du csv un délimiteur défini.
 
@@ -158,13 +171,17 @@ class ReadCsvWithDelimiter:
                 dtype=str,
                 engine="python",
                 quoting=csv.QUOTE_NONE,
-                on_bad_lines="warn"
+                on_bad_lines="warn",
             )
 
-            self.logger.info(f"✅ Lecture réussie avec délimiteur '¤' après détection binaire : {os.path.basename(self.file_path)}")
+            self.logger.info(
+                f"✅ Lecture réussie avec délimiteur '¤' après détection binaire : {os.path.basename(self.file_path)}"
+            )
             return df
         except Exception as e:
-            self.logger.error(f"❌ Erreur lors de la lecture de {self.file_path} avec délimiteur '¤' → {e}")
+            self.logger.error(
+                f"❌ Erreur lors de la lecture de {self.file_path} avec délimiteur '¤' → {e}"
+            )
             raise
 
     def read_csv_files(self) -> pd.DataFrame:
@@ -179,11 +196,15 @@ class ReadCsvWithDelimiter:
         try:
             return self.read_csv_resilient()
         except Exception as e:
-            self.logger.warning(f"🔁 Tentative de lecture alternative avec délimiteur personnalisé '¤' après échec → {e}")
+            self.logger.warning(
+                f"🔁 Tentative de lecture alternative avec délimiteur personnalisé '¤' après échec → {e}"
+            )
             try:
                 return self.read_csv_with_custom_delimiter("¤")
             except Exception as final_e:
-                self.logger.error(f"❌ Lecture échouée pour {self.file_path.name} même après tentative personnalisée → {final_e}")
+                self.logger.error(
+                    f"❌ Lecture échouée pour {self.file_path.name} même après tentative personnalisée → {final_e}"
+                )
                 return pd.DataFrame()
 
 
@@ -206,9 +227,10 @@ class StandardizeColnames:
         """
         Supprime les accents d'un texte.
         """
-        return ''.join(
-            c for c in unicodedata.normalize('NFD', text)
-            if unicodedata.category(c) != 'Mn'
+        return "".join(
+            c
+            for c in unicodedata.normalize("NFD", text)
+            if unicodedata.category(c) != "Mn"
         )
 
     def shorten_column_names(self, text: str, max_length: int = 63):
@@ -297,12 +319,16 @@ class ColumnsManagement(StandardizeColnames):
         extra_columns = set(csv_columns) - set(table_columns)
 
         if missing_columns:
-            self.logger.warning(f"Colonnes manquantes dans {csv_file_name} : {missing_columns}")
+            self.logger.warning(
+                f"Colonnes manquantes dans {csv_file_name} : {missing_columns}"
+            )
             for col in missing_columns:
                 self.df[col] = None
 
         if extra_columns:
-            self.logger.warning(f"Colonnes en trop dans {csv_file_name} : {extra_columns}")
+            self.logger.warning(
+                f"Colonnes en trop dans {csv_file_name} : {extra_columns}"
+            )
             self.df = self.df[table_columns]
 
     def get_column_length(self):
@@ -311,9 +337,12 @@ class ColumnsManagement(StandardizeColnames):
         Par exemple, VARCHAR(50) sera séparé en VARCHAR dans column_base_type et 50 dans column_length.
         Si la longueur n'existe pas, alors column_length est vide (NA).
         """
-        self.schema_df["column_base_type"] = self.schema_df["column_type"].astype(str).str.extract(r"^(\w+)")
+        self.schema_df["column_base_type"] = (
+            self.schema_df["column_type"].astype(str).str.extract(r"^(\w+)")
+        )
         self.schema_df["column_length"] = (
-            self.schema_df["column_type"].astype(str)
+            self.schema_df["column_type"]
+            .astype(str)
             .str.extract(r"\((\d+)\)")
             .astype("Int64")
         )
@@ -365,19 +394,38 @@ class ColumnsManagement(StandardizeColnames):
             if col_name in self.df.columns and col_type in self.type_mapping:
                 try:
                     if self.type_mapping[col_type] in ["int", "float"]:
-                        self.df[col_name] = self.df[col_name].replace({None: 0, "": 0, pd.NA: 0, "nan": 0}).astype(float).astype(self.type_mapping[col_type])
+                        self.df[col_name] = (
+                            self.df[col_name]
+                            .replace({None: 0, "": 0, pd.NA: 0, "nan": 0})
+                            .astype(float)
+                            .astype(self.type_mapping[col_type])
+                        )
                     elif self.type_mapping[col_type] == "bool":
-                        self.df[col_name] = self.df[col_name].replace({None: False, "": False, pd.NA: False}).astype(bool)
+                        self.df[col_name] = (
+                            self.df[col_name]
+                            .replace({None: False, "": False, pd.NA: False})
+                            .astype(bool)
+                        )
                     elif self.type_mapping[col_type] == "datetime64":
-                        self.df[col_name] = pd.to_datetime(self.df[col_name], format="%d-%m-%Y", errors="coerce")
+                        self.df[col_name] = pd.to_datetime(
+                            self.df[col_name], format="%d-%m-%Y", errors="coerce"
+                        )
                     elif self.type_mapping[col_type] == "string":
-                        self.df[col_name] = self.df[col_name].astype(self.type_mapping[col_type]).fillna('')
+                        self.df[col_name] = (
+                            self.df[col_name]
+                            .astype(self.type_mapping[col_type])
+                            .fillna("")
+                        )
                         if not pd.isna(col_length):
                             self.df[col_name] = self.df[col_name].str[:col_length]
                     else:
-                        self.df[col_name] = self.df[col_name].astype(self.type_mapping[col_type])
+                        self.df[col_name] = self.df[col_name].astype(
+                            self.type_mapping[col_type]
+                        )
                 except ValueError as e:
-                    self.logger.warning(f"Erreur de conversion de {col_name} en {col_type}: {e}, valeurs laissées en str.")
+                    self.logger.warning(
+                        f"Erreur de conversion de {col_name} en {col_type}: {e}, valeurs laissées en str."
+                    )
 
     def csv_pipeline(self) -> pd.DataFrame:
         """
@@ -396,7 +444,15 @@ class ColumnsManagement(StandardizeColnames):
 
 
 class TableInCsv:
-    def __init__(self, conn, table_name: str, csv_name: str, df_fetch_func: Callable[[str], pd.DataFrame], folder: str, logger: Logger):
+    def __init__(
+        self,
+        conn,
+        table_name: str,
+        csv_name: str,
+        df_fetch_func: Callable[[str], pd.DataFrame],
+        folder: str,
+        logger: Logger,
+    ):
         """
         Importe ou exporte une table au format csv depuis/vers une base de données.
 
@@ -431,7 +487,7 @@ class TableInCsv:
         os.makedirs(input_folder, exist_ok=True)
 
         # Nom du fichier
-        file_name = f'{self.csv_name}.csv'
+        file_name = f"{self.csv_name}.csv"
         input_path = os.path.join(input_folder, file_name)
         self.logger.info(f"📤 Import de '{self.table_name}' → {input_path}")
 
@@ -455,7 +511,7 @@ class TableInCsv:
         os.makedirs(output_folder, exist_ok=True)
 
         # Nom du fichier
-        file_name = f'{self.csv_name}_{date}.csv'
+        file_name = f"{self.csv_name}_{date}.csv"
         output_path = os.path.join(output_folder, file_name)
         self.logger.info(f"📤 Export de '{self.table_name}' → {output_path}")
 
@@ -463,7 +519,7 @@ class TableInCsv:
         try:
             # Exportation
             df = self.df_fetch_func(self.conn, self.table_name)
-            
+
             df.to_csv(output_path, index=False, sep=";", encoding="utf-8-sig")
             self.logger.info(f"✅ Export réussi : {file_name}")
         except Exception as e:

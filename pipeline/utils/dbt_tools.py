@@ -1,22 +1,28 @@
 # === Packages ===
 import os
-from pathlib import Path
 import subprocess
-from typing import Literal
 from logging import Logger
+from pathlib import Path
+from typing import Literal
 
 # === Modules ===
 from pipeline.utils.config import env_var, setup_config
 
+
 # === Fonctions ===
 def dbt_deps(project_path: str):
-    return subprocess.run(
-        ["dbt",
-         "deps",
-         "--project-dir", project_path
-        ])
+    return subprocess.run(["dbt", "deps", "--project-dir", project_path])
 
-def dbt_exec(type_exec: str, profile: str, target: Literal["local", "anais"], project_dir: str, profiles_dir: str, logger: Logger, install_deps: bool = True):
+
+def dbt_exec(
+    type_exec: str,
+    profile: str,
+    target: Literal["local", "anais"],
+    project_dir: str,
+    profiles_dir: str,
+    logger: Logger,
+    install_deps: bool = True,
+):
     """
     Fonction exécutant la commande 'dbt test' avec les différentes options.
     Exécute obligatoirement le répertoire 'base' dans les modèles dbt, ainsi que le répertoire choisi.
@@ -40,21 +46,30 @@ def dbt_exec(type_exec: str, profile: str, target: Literal["local", "anais"], pr
         project_path = str(Path(project_dir).resolve())
         profiles_path = str(Path(profiles_dir).resolve())
 
-        if not os.path.exists(os.path.join(project_path, "package-lock.yml")) and install_deps:
-            dbt_deps_install = dbt_deps(project_path)
+        if (
+            not os.path.exists(os.path.join(project_path, "package-lock.yml"))
+            and install_deps
+        ):
+            dbt_deps(project_path)
 
         result = subprocess.run(
-            ["dbt",
-             type_exec,
-             "--project-dir", project_path,
-             "--profiles-dir", profiles_path,
-             "--profile", profile,
-             "--target", target,
-             "--select", f"+{project_dir}"
-             ],
+            [
+                "dbt",
+                type_exec,
+                "--project-dir",
+                project_path,
+                "--profiles-dir",
+                profiles_path,
+                "--profile",
+                profile,
+                "--target",
+                target,
+                "--select",
+                f"+{project_dir}",
+            ],
             capture_output=True,
             text=True,
-            check=True
+            check=True,
         )
         logger.info(f"✅ Dbt {type_exec} de {project_dir} terminé avec succès")
         logger.info(result.stdout)
@@ -63,9 +78,24 @@ def dbt_exec(type_exec: str, profile: str, target: Literal["local", "anais"], pr
         logger.error(f"❌ Erreur lors du dbt {type_exec} :")
         logger.error(e.stdout)
 
+
 if __name__ == "__main__":
-    config_var = env_var() 
+    config_var = env_var()
     config_var = setup_config(config_var)
 
-    dbt_exec("run", config_var["profile"], config_var["env"], config_var["config"]["models_directory"], ".", config_var["logger"])
-    dbt_exec("test", config_var["profile"], config_var["env"], config_var["config"]["models_directory"], ".", config_var["logger"])
+    dbt_exec(
+        "run",
+        config_var["profile"],
+        config_var["env"],
+        config_var["config"]["models_directory"],
+        ".",
+        config_var["logger"],
+    )
+    dbt_exec(
+        "test",
+        config_var["profile"],
+        config_var["env"],
+        config_var["config"]["models_directory"],
+        ".",
+        config_var["logger"],
+    )

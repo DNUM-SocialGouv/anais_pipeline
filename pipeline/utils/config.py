@@ -1,7 +1,8 @@
 # === Packages ===
-from dotenv import load_dotenv
 import argparse
-from datetime import date
+from datetime import datetime, timezone
+
+from dotenv import load_dotenv
 
 # === Modules ===
 from pipeline.utils.load_yml import load_metadata_YAML
@@ -10,9 +11,17 @@ from pipeline.utils.logging_management import setup_logger
 # === Constantes ===
 load_dotenv()
 ENV_CHOICE = ["local", "anais"]
-PROFILE_CHOICE = ["Staging", "CertDC", "Helios", "InspectionControlePA", "InspectionControlePH", "MatricePreciblage"]
+PROFILE_CHOICE = [
+    "Staging",
+    "CertDC",
+    "Helios",
+    "InspectionControlePA",
+    "InspectionControlePH",
+    "MatricePreciblage",
+]
 METADATA_YML = "metadata.yml"
 PROFILE_YML = "profiles.yml"
+
 
 # === Fonctions ===
 def env_var() -> dict:
@@ -27,8 +36,18 @@ def env_var() -> dict:
         Dictionnaire contenant les clés env et profile, associé à leurs valeurs respectives.
     """
     parser = argparse.ArgumentParser(description="Exécution du pipeline")
-    parser.add_argument("--env", choices=ENV_CHOICE, default=ENV_CHOICE[0], help="Environnement d'exécution")
-    parser.add_argument("--profile", choices=PROFILE_CHOICE, default=PROFILE_CHOICE[0], help="Profile dbt d'exécution")
+    parser.add_argument(
+        "--env",
+        choices=ENV_CHOICE,
+        default=ENV_CHOICE[0],
+        help="Environnement d'exécution",
+    )
+    parser.add_argument(
+        "--profile",
+        choices=PROFILE_CHOICE,
+        default=PROFILE_CHOICE[0],
+        help="Profile dbt d'exécution",
+    )
     args = parser.parse_args()
     env = args.env
     profile = args.profile
@@ -37,12 +56,14 @@ def env_var() -> dict:
         "env_choice": ENV_CHOICE,
         "profile_choice": PROFILE_CHOICE,
         "env": env,
-        "profile": profile
-        }
+        "profile": profile,
+    }
     return config_var
 
 
-def setup_config(config_var: dict, metadata_yml: str = METADATA_YML, profile_yml: str  = PROFILE_YML) -> dict:
+def setup_config(
+    config_var: dict, metadata_yml: str = METADATA_YML, profile_yml: str = PROFILE_YML
+) -> dict:
     """
     Fonction de setup de variable nécessaire à la pipeline.
         - logger : Fichier de log.
@@ -68,14 +89,15 @@ def setup_config(config_var: dict, metadata_yml: str = METADATA_YML, profile_yml
 
     config = load_metadata_YAML(metadata_yml, profile, logger, ".")
     db_config = load_metadata_YAML(profile_yml, profile, logger, ".")["outputs"][env]
-    staging_db_config = load_metadata_YAML(profile_yml, "Staging", logger, ".")["outputs"][env]
-    today = date.strftime(date.today(), "%Y_%m_%d")
+    staging_db_config = load_metadata_YAML(profile_yml, "Staging", logger, ".")[
+        "outputs"
+    ][env]
+    today = datetime.now(tz=timezone.utc).strftime("%Y_%m_%d")
 
     config_var["logger"] = logger
     config_var["config"] = config
     config_var["db_config"] = db_config
     config_var["staging_db_config"] = staging_db_config
     config_var["today"] = today
-    
 
     return config_var

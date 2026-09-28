@@ -1,9 +1,10 @@
 # === Packages ===
 import os
-from pathlib import Path
-import yaml
 import re
 from logging import Logger
+from pathlib import Path
+
+import yaml
 
 
 # === Fonctions ===
@@ -40,7 +41,7 @@ def load_YAML(file_name: str, config_file_dir: str, logger: Logger) -> dict:
         current_dir = Path(__file__).resolve().parent
         path = current_dir.parent / "pipeline" / file_name
     try:
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             file = yaml.safe_load(f)
             logger.info(f"Acces config file readed from {path}")
             return file
@@ -52,11 +53,15 @@ def load_YAML(file_name: str, config_file_dir: str, logger: Logger) -> dict:
         logger.error(f"Erreur de parsing YAML dans le fichier {file_name} : {e}")
         raise
     except Exception as e:
-        logger.error(f"Erreur inattendue lors du chargement du fichier de configuration : {e}")
+        logger.error(
+            f"Erreur inattendue lors du chargement du fichier de configuration : {e}"
+        )
         raise
 
 
-def load_metadata_YAML(file_name: str, table: str, logger: Logger, config_file_dir: str = None) -> dict:
+def load_metadata_YAML(
+    file_name: str, table: str, logger: Logger, config_file_dir: str | None = None
+) -> dict:
     """
     Charge le fichier de configuration et récupère la liste des colonnes d'une table donnée.
 
@@ -89,8 +94,10 @@ def load_metadata_YAML(file_name: str, table: str, logger: Logger, config_file_d
         metadata = load_YAML(file_name, config_file_dir, logger=logger)
 
         if table not in metadata:
-            raise KeyError(f"La table '{table}' n'existe pas dans le fichier {file_name}.")
-        
+            raise KeyError(
+                f"La table '{table}' n'existe pas dans le fichier {file_name}."
+            )
+
         return metadata[table]
     except KeyError as e:
         logger.error(f"{table} n'est pas existant dans le fichier {file_name}: {e}")

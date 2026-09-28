@@ -1,14 +1,15 @@
 # === Packages ===
-import os
-from paramiko import SFTPClient, Transport, SFTPAttributes
 import datetime
-from dotenv import load_dotenv
-from typing import Optional, List, Dict
+import os
 from logging import Logger
 
+from dotenv import load_dotenv
+from paramiko import SFTPAttributes, SFTPClient, Transport
+
 # === Modules ===
-from pipeline.utils.csv_management import TransformExcel
 from pipeline.utils.config import env_var, setup_config
+from pipeline.utils.csv_management import TransformExcel
+
 
 # === Classes ===
 # Classe SFTPSync
@@ -62,10 +63,12 @@ class SFTPSync:
         try:
             self.sftp.chdir(path)
             return True
-        except IOError:
+        except OSError:
             return False
 
-    def get_latest_file(self, remote_dir: str, keyword: str) -> Optional[SFTPAttributes]:
+    def get_latest_file(
+        self, remote_dir: str, keyword: str
+    ) -> SFTPAttributes | None:
         """
         Sur le SFTP, récupère le fichier le plus récent contenant la chaine de caractère définie.
 
@@ -84,16 +87,20 @@ class SFTPSync:
         try:
             files = self.sftp.listdir_attr(remote_dir)
             matching_files = [
-                f for f in files
+                f
+                for f in files
                 if keyword in f.filename and not f.filename.endswith((".gpg", ".xlsx"))
             ]
-            if 'DIAMANT' in remote_dir:
+            if "DIAMANT" in remote_dir:
                 matching_files = [
-                    f for f in files
-                    if keyword in f.filename and not f.filename.endswith((".gpg"))
+                    f
+                    for f in files
+                    if keyword in f.filename and not f.filename.endswith(".gpg")
                 ]
             if not matching_files:
-                self.logger.warning(f"Aucun fichier correspondant à '{keyword}' dans {remote_dir}")
+                self.logger.warning(
+                    f"Aucun fichier correspondant à '{keyword}' dans {remote_dir}"
+                )
                 return None
             return max(matching_files, key=lambda f: f.st_mtime)
         except FileNotFoundError:
@@ -117,7 +124,7 @@ class SFTPSync:
         except Exception as e:
             self.logger.error(f"Échec du téléchargement {remote_dir} : {e}")
 
-    def download_all(self, files_list: List[Dict[str, str]]):
+    def download_all(self, files_list: list[dict[str, str]]):
         """
         Téléchargement de tous les fichiers indiqués dans files_list, depuis le SFTP.
         Les fichiers sont enregistrés sous format csv dans un fichier local.
@@ -132,24 +139,27 @@ class SFTPSync:
         """
         self.connect()
         files_to_download = [
-            (item["path"], item["keyword"], item["file"])
-            for item in files_list
+            (item["path"], item["keyword"], item["file"]) for item in files_list
         ]
 
         # Boucle parcourant chaque fichier à télécharger
         for remote_dir, keyword, local_filename in files_to_download:
-            self.logger.info(f"Recherche du fichier contenant '{keyword}' dans {remote_dir}")
+            self.logger.info(
+                f"Recherche du fichier contenant '{keyword}' dans {remote_dir}"
+            )
             latest_file = self.get_latest_file(remote_dir, keyword)
 
             if latest_file:
                 remote_path = os.path.join(remote_dir, latest_file.filename)
                 mod_time = datetime.datetime.fromtimestamp(latest_file.st_mtime)
                 local_path = os.path.join(self.output_folder, local_filename)
-                self.logger.info(f"Dernière version : {latest_file.filename} (modifié le {mod_time})")
+                self.logger.info(
+                    f"Dernière version : {latest_file.filename} (modifié le {mod_time})"
+                )
 
                 # Gestion des fichiers au format excel (DIAMANT)
-                if '.xlsx' in latest_file.filename:
-                    local_xlsx_path = local_path.replace('.csv', '.xlsx')
+                if ".xlsx" in latest_file.filename:
+                    local_xlsx_path = local_path.replace(".csv", ".xlsx")
                     self.download_file(remote_path, local_xlsx_path)
                     TransformExcel(local_xlsx_path, local_path, logger=self.logger)
                 # Autres fichiers au format csv
@@ -157,7 +167,9 @@ class SFTPSync:
                     self.download_file(remote_path, local_path)
         self.close()
 
-    def upload_file_to_sftp(self, views_to_export: dict, output_dir: str, remote_dir: str, date: str):
+    def upload_file_to_sftp(
+        self, views_to_export: dict, output_dir: str, remote_dir: str, date: str
+    ):
         """
         Exporte les vues enregistrées en csv du répertoire local au répertoire distant.
 
@@ -177,9 +189,9 @@ class SFTPSync:
             if not self.sftp_dir_exists(remote_dir):
                 self.logger.error(f"❌ Répertoire SFTP inexistant : {remote_dir}")
             else:
-                for _, csv_name in views_to_export.items():
+                for csv_name in views_to_export.values():
                     # Récupère le nom du fichier csv
-                    file_name = f'{csv_name}_{date}.csv'
+                    file_name = f"{csv_name}_{date}.csv"
                     local_path = os.path.join(output_dir, file_name)
                     remote_path = os.path.join(remote_dir, file_name)
 
@@ -187,7 +199,9 @@ class SFTPSync:
                     if os.path.exists(local_path):
                         try:
                             self.sftp.put(local_path, remote_path)
-                            self.logger.info(f"✅ Upload réussi: {file_name} → {remote_path}")
+                            self.logger.info(
+                                f"✅ Upload réussi: {file_name} → {remote_path}"
+                            )
                         except Exception as e:
                             self.logger.error(f"❌ Échec de l'upload {file_name} → {e}")
                     else:
@@ -195,14 +209,14 @@ class SFTPSync:
         self.close()
 
     def close(self):
-        """ Fermeture de la connexion SFTP """
+        """Fermeture de la connexion SFTP"""
         self.sftp.close()
         self.transport.close()
         self.logger.info("Connexion SFTP fermée.")
 
 
 if __name__ == "__main__":
-    config_var = env_var() 
+    config_var = env_var()
     config_var = setup_config(config_var)
 
     sftp = SFTPSync(config_var["config"]["local_directory_input"], config_var["logger"])

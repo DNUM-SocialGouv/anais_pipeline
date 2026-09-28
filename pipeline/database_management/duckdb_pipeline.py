@@ -1,19 +1,26 @@
 # === Packages ===
-import duckdb
 import os
-from pathlib import Path
-import pandas as pd
 from logging import Logger
+from pathlib import Path
+
+import duckdb
+import pandas as pd
 
 # === Modules ===
-from pipeline.utils.csv_management import ColumnsManagement
 from pipeline.database_management.database_pipeline import DataBasePipeline
+from pipeline.utils.csv_management import ColumnsManagement
 
 
 # === Classes ===
 # Classe DuckDBPipeline qui gère les actions relatives à une database duckdb
 class DuckDBPipeline(DataBasePipeline):
-    def __init__(self, db_config: dict, config: dict, logger: Logger, staging_db_config: dict = None):
+    def __init__(
+        self,
+        db_config: dict,
+        config: dict,
+        logger: Logger,
+        staging_db_config: dict | None = None,
+    ):
         """
         Initialisation de la base DuckDB. Classe héritière de DataBasePipeline.
 
@@ -37,7 +44,7 @@ class DuckDBPipeline(DataBasePipeline):
         self.init_duckdb()
 
     def init_duckdb(self):
-        """ Vérifie si la base DuckDB existe, sinon la crée. """
+        """Vérifie si la base DuckDB existe, sinon la crée."""
         db_dir = os.path.dirname(self.db_path)
 
         if db_dir and not os.path.exists(db_dir):
@@ -52,12 +59,12 @@ class DuckDBPipeline(DataBasePipeline):
             conn.close()
 
     def connect(self):
-        """ Connexion à la base DuckDB. """
+        """Connexion à la base DuckDB."""
         self.logger.info("Connexion à la base DuckDB.")
         self.conn = duckdb.connect(database=self.db_path)
 
     def is_duckdb_empty(self) -> bool:
-        """ Vérifie si la base DuckDB est vide ou non """
+        """Vérifie si la base DuckDB est vide ou non"""
         conn = self.conn
         result = conn.execute("""
             SELECT COUNT(*) 
@@ -118,7 +125,7 @@ class DuckDBPipeline(DataBasePipeline):
         bool
             True si la table existe (et non vide si applicable), False sinon.
         """
-        table_name = query_params['table']
+        table_name = query_params["table"]
         table_exists = conn.execute(f"""
                 SELECT COUNT(*)
                 FROM information_schema.tables 
@@ -169,7 +176,9 @@ class DuckDBPipeline(DataBasePipeline):
         table = query_params["table"]
 
         df = conn.execute(f"SELECT * FROM {table} LIMIT {limit}").fetchdf()
-        self.logger.info(f"🔍 Aperçu de '{table}' ({limit} lignes) :\n{df.to_string(index=False)}")
+        self.logger.info(
+            f"🔍 Aperçu de '{table}' ({limit} lignes) :\n{df.to_string(index=False)}"
+        )
 
     def load_csv_file(self, conn, csv_file: Path):
         """
@@ -188,25 +197,35 @@ class DuckDBPipeline(DataBasePipeline):
 
         # Si la table est inexistante
         if not self.is_table_exist(conn, self.query_params):
-            self.logger.warning(f"Table {table_name} non trouvée, impossible de charger {csv_file.name}")
+            self.logger.warning(
+                f"Table {table_name} non trouvée, impossible de charger {csv_file.name}"
+            )
             return
 
         schema_df = self.get_duckdb_schema(conn, table_name)
 
         # Chargement du csv
-        pipeline = ColumnsManagement(csv_file=csv_file, schema_df=schema_df, logger=self.logger)
-        df = pipeline.df
+        pipeline = ColumnsManagement(
+            csv_file=csv_file, schema_df=schema_df, logger=self.logger
+        )
+        df = pipeline.df  # noqa
 
         # Vérification de la présence de la table
         row_count = conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
 
         if row_count > 0:
-            self.logger.info(f"Données déjà présentes dans {table_name}, passage du fichier CSV : {csv_file.name}")
+            self.logger.info(
+                f"Données déjà présentes dans {table_name}, passage du fichier CSV : {csv_file.name}"
+            )
         else:
-            self.logger.info(f"🆕 Injection dans la table '{table_name}' à partir du CSV {csv_file}")
+            self.logger.info(
+                f"🆕 Injection dans la table '{table_name}' à partir du CSV {csv_file}"
+            )
             try:
                 conn.execute(f"INSERT INTO {table_name} SELECT * FROM df")
-                self.logger.info(f"✅ Table '{table_name}' créée et remplie avec succès ({csv_file})")
+                self.logger.info(
+                    f"✅ Table '{table_name}' créée et remplie avec succès ({csv_file})"
+                )
             except duckdb.Error as e:
                 self.logger.error(f"Erreur lors du chargement de {csv_file.name}: {e}")
 
@@ -220,7 +239,9 @@ class DuckDBPipeline(DataBasePipeline):
             Connexion à la base de données.
         """
         try:
-            tables = conn.execute("SELECT table_schema, table_name FROM information_schema.tables").fetchall()
+            tables = conn.execute(
+                "SELECT table_schema, table_name FROM information_schema.tables"
+            ).fetchall()
 
             if not tables:
                 self.logger.warning("Aucune table trouvée dans la base DuckDB.")
@@ -253,8 +274,9 @@ class DuckDBPipeline(DataBasePipeline):
         df = conn.execute(f"SELECT * FROM {table_name}").fetchdf()
         return df
 
-
-    def copy_table_from_staging(self, conn, staging_table_name: str, db_table_name: str):
+    def copy_table_from_staging(
+        self, conn, staging_table_name: str, db_table_name: str
+    ):
         """
         Copie d'une table de la base Staging vers la base cible.
 
@@ -263,14 +285,12 @@ class DuckDBPipeline(DataBasePipeline):
         staging_table_name : str
             Nom de la table que l'on "copie".
         db_table_name : str
-            Nom de la table que l'on "colle". 
+            Nom de la table que l'on "colle".
         """
         if self.staging_db_config:
-            query_params = {"schema": self.schema, "table": db_table_name}
-
             # Récupération de la table dans Staging
             staging_db_path = Path(self.staging_db_config.get("path"))
-            
+
             # Connexion à la base staging
             staging_conn = duckdb.connect(staging_db_path)
             df = staging_conn.execute(f"SELECT * FROM {staging_table_name}").fetchdf()
@@ -283,13 +303,19 @@ class DuckDBPipeline(DataBasePipeline):
                     SELECT * FROM staging_data
                 """)
 
-                self.logger.info(f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}.")
-                
+                self.logger.info(
+                    f"✅ La table {staging_table_name} a bien été récupérée de la base DuckDB Staging sous le nom {db_table_name}."
+                )
+
             except Exception as e:
-                self.logger.error(f"❌ Erreur lors de la copie de la table {db_table_name} provenant de staging : {e}")  
+                self.logger.error(
+                    f"❌ Erreur lors de la copie de la table {db_table_name} provenant de staging : {e}"
+                )
 
         else:
-            self.logger.error("❌ La configuration de la base Staging n'a pas été indiquée.")
+            self.logger.error(
+                "❌ La configuration de la base Staging n'a pas été indiquée."
+            )
 
     def copy_table_into_new(self, conn, source: str, target: str):
         """
@@ -320,14 +346,16 @@ class DuckDBPipeline(DataBasePipeline):
         source : str
             Nom de la table que l'on "copie".
         target : str
-            Nom de la table à laquelle on ajoute les données de la première. 
+            Nom de la table à laquelle on ajoute les données de la première.
 
         """
         # Récupérer les colonnes des deux tables
-        source_cols = [row[1] for row in conn.execute(
-            f"PRAGMA table_info('{source}')").fetchall()]
-        target_cols = [row[1] for row in conn.execute(
-            f"PRAGMA table_info('{target}')").fetchall()]
+        source_cols = [
+            row[1] for row in conn.execute(f"PRAGMA table_info('{source}')").fetchall()
+        ]
+        target_cols = [
+            row[1] for row in conn.execute(f"PRAGMA table_info('{target}')").fetchall()
+        ]
 
         # Colonnes communes
         common_cols = [col for col in source_cols if col in target_cols]
@@ -354,7 +382,7 @@ class DuckDBPipeline(DataBasePipeline):
             Nom de la colonne date.
         """
         tz = "Europe/Paris"
-        
+
         # Vérifier que la colonne existe
         check_query = f"""
             SELECT column_name
@@ -365,9 +393,11 @@ class DuckDBPipeline(DataBasePipeline):
         column_exists = conn.execute(check_query).fetchone()
 
         if not column_exists:
-            conn.execute(f'ALTER TABLE "{table_name}" ADD COLUMN {column_name} TIMESTAMP')
+            conn.execute(
+                f'ALTER TABLE "{table_name}" ADD COLUMN {column_name} TIMESTAMP'
+            )
             self.logger.info(f"Colonne {column_name} créée dans la table {table_name}")
-        
+
         conn.execute(f'''
             UPDATE "{table_name}"
             SET {column_name} = timezone('{tz}', CURRENT_TIMESTAMP)
@@ -428,11 +458,15 @@ class DuckDBPipeline(DataBasePipeline):
         """).fetchall()
 
         for view_schema, view in views:
-            self.logger.info(f"🗑 Vue '{view_schema}.{view}' → suppression totale (DROP VIEW)")
+            self.logger.info(
+                f"🗑 Vue '{view_schema}.{view}' → suppression totale (DROP VIEW)"
+            )
             conn.execute(f'DROP VIEW IF EXISTS "{view_schema}"."{view}"')
 
         # Suppression de la table
-        self.logger.info(f"🗑 Table '{schema}.{table_name}' → suppression totale (DROP TABLE)")
+        self.logger.info(
+            f"🗑 Table '{schema}.{table_name}' → suppression totale (DROP TABLE)"
+        )
         conn.execute(f'DROP TABLE IF EXISTS "{schema}"."{table_name}"')
 
     def reset_histo(self):
@@ -450,7 +484,7 @@ class DuckDBPipeline(DataBasePipeline):
         schema = self.schema
 
         # Récupération des tables
-        query = f"""
+        query = """
             SELECT table_name
             FROM information_schema.tables
             WHERE table_schema = ?
@@ -469,10 +503,12 @@ class DuckDBPipeline(DataBasePipeline):
                 self.drop_table(conn, query_params)
                 self.logger.info(f"✅ Table {schema}.{table} supprimée")
         except Exception as e:
-            self.logger.error(f"❌ Erreur lors de la réinitialisation de l'historique : {e}")
+            self.logger.error(
+                f"❌ Erreur lors de la réinitialisation de l'historique : {e}"
+            )
             raise
-    
+
     def close(self):
-        """ Ferme la connexion à la base de données Duckdb. """
+        """Ferme la connexion à la base de données Duckdb."""
         self.conn.close()
         self.logger.info("Connexion à DuckDB fermée.")
