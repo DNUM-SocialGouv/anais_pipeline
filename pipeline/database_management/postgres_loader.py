@@ -123,9 +123,13 @@ class PostgreSQLLoader(DataBasePipeline):
         query_params : dict
             Paramètres à injecter dans la requête SQL.
         """
-        if self.is_table_exist(conn, query_params):
-            self.postgres_drop_table(conn, query_params)
+        try:
+            if self.is_table_exist(conn, query_params):
+                self.postgres_drop_table(conn, query_params)
             conn.execute(text(sql_query))
+        except Exception as e:
+            self.logger.error(f"❌ Erreur lors de l'exécution : {e}")
+            raise
 
     def get_postgres_schema(self, conn, table_name: str) -> pd.DataFrame:
         """
