@@ -42,11 +42,11 @@ class PostgreSQLLoader(DataBasePipeline):
         db_config : dict
             Configuration de la base postgres.
         sql_folder : str, optional
-            Répertoire des fichiers SQL CREATE TABLE, by default "Staging/output_sql/"
+            Répertoire des fichiers SQL CREATE TABLE, by default "Staging/output_sql/".
         csv_folder_input : str, optional
-            Répertoire des fichiers csv importés, by default "input/"
+            Répertoire des fichiers csv importés, by default "input/".
         csv_folder_output : str, optional
-            Répertoire des fichiers csv exportés, by default "output/"
+            Répertoire des fichiers csv exportés, by default "output/".
         """
         super().__init__(sql_folder=sql_folder,
                          csv_folder_input=csv_folder_input,
@@ -60,7 +60,7 @@ class PostgreSQLLoader(DataBasePipeline):
         self.database = db_config["dbname"]
         self.schema = db_config["schema"]
         self.engine = self.init_engine()
-        self.conn = self.engine.connect()
+        # self.conn = self.engine.connect()
 
     def init_engine(self):
         """ Connexion à la base postgres. """
@@ -72,6 +72,11 @@ class PostgreSQLLoader(DataBasePipeline):
         except Exception as e:
             logging.error(f"Erreur de connexion PostgreSQL : {e}")
             raise
+
+    def connect(self):
+        """ Connexion à la base postgres. """
+        self.conn = self.engine.connect()
+        self.logger.info("Connexion PostgreSQL établie avec succès.")
 
     def postgres_drop_table(self, conn, query_params: dict):
         """
@@ -105,7 +110,7 @@ class PostgreSQLLoader(DataBasePipeline):
         logging.info(f"🗑 Table '{table_name}' existante → suppression totale (DROP TABLE)")
         conn.execute(text(f"DROP TABLE IF EXISTS {table_name} CASCADE"))
 
-    def create_table(self, conn, sql_query: str, query_params: str):
+    def create_table(self, conn, sql_query: str, query_params: dict):
         """
         Exécution du fichier SQL Create Table.
 

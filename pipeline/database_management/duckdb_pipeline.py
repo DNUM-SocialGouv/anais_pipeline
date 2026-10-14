@@ -24,7 +24,7 @@ logging.basicConfig(
 class DuckDBPipeline(DataBasePipeline):
     def __init__(self,
                 db_config: dict,
-                sql_folder: str = "output_sql/",
+                sql_folder: str = "Staging/output_sql/",
                 csv_folder_input: str = "input/",
                 csv_folder_output: str = "output/"
                 ):
@@ -33,14 +33,14 @@ class DuckDBPipeline(DataBasePipeline):
 
         Parameters
         ----------
+        db_config : dict
+            Configuration de la base duckdb.
         sql_folder : str, optional
             Répertoire des fichiers SQL CREATE TABLE, by default "Staging/output_sql/".
         csv_folder_input : str, optional
             Répertoire des fichiers csv importés, by default "input/".
         csv_folder_output : str, optional
             Répertoire des fichiers csv exportés, by default "output/".
-        db_path : str, optional
-            Répertoire de la base duckdb, by default 'data/duckdb_database.duckdb'.
         """
         super().__init__(sql_folder=sql_folder,
                          csv_folder_input=csv_folder_input,
@@ -75,7 +75,7 @@ class DuckDBPipeline(DataBasePipeline):
         sql_query : str
             Contenu du fichier SQL Create table.
         query_params : dict
-            Paramètres à injecter dans la requête SQL (Non nécessaire).
+            Paramètres à injecter dans la requête SQL.
         """
         conn.execute(sql_query)
 

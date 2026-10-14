@@ -102,8 +102,6 @@ class DataBasePipeline:
         ----------
         conn : sqlalchemy.engine.base.Connection | duckdb.DuckDBPyConnection
             Connexion à la base de données.
-        table_name : str
-            Nom de la table à vérifier.
         query_params : dict
             Paramètres à injecter dans la requête SQL.
         print_table : bool, optional
