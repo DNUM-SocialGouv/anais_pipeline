@@ -76,7 +76,7 @@ class PostgreSQLLoader(DataBasePipeline):
     def connect(self):
         """ Connexion à la base postgres. """
         self.conn = self.engine.connect()
-        self.logger.info("Connexion PostgreSQL établie avec succès.")
+        logging.info("Connexion PostgreSQL établie avec succès.")
 
     def postgres_drop_table(self, conn, query_params: dict):
         """
