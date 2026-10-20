@@ -161,6 +161,8 @@ def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_
 
     pg_loader.run()
 
+    pg_loader.close()
+
     # Création des vues et export
     dbt_exec("run", profile, "anais", config["models_directory"], ".", logger)
     dbt_exec("test", profile, "anais", config["models_directory"], ".", logger)
@@ -172,9 +174,12 @@ def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_
     # sftp.upload_file_to_sftp(config["input_to_download"], config["local_directory_output"], config["remote_directory_input"], date=today)
 
     # Upload les vues
+    pg_loader.connect()
     pg_loader.export_csv(config["files_to_upload"], date=today)
-    sftp.upload_file_to_sftp(config["files_to_upload"], config["local_directory_output"], config["remote_directory_output"], date=today)
     pg_loader.close()
+    
+    sftp.upload_file_to_sftp(config["files_to_upload"], config["local_directory_output"], config["remote_directory_output"], date=today)
+    
 
 
 def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_db_config: dict, today: str, logger: Logger):
