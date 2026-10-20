@@ -232,7 +232,6 @@ class DuckDBPipeline(DataBasePipeline):
             FROM information_schema.tables 
             WHERE table_schema NOT IN ('pg_catalog', 'information_schema')
         """).fetchone()[0]
-        # self.conn.close()
         return result == 0
 
     def fetch_df(self, table_name: str) -> pd.DataFrame:

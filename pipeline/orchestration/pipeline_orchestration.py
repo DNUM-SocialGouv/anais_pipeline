@@ -155,18 +155,14 @@ def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_
         csv_folder_output=csv_folder_output
         )
 
-    # # Remplissage des tables de la base postgres
-    # pg_loader.connect()
-    # # pg_loader.copy_table(config["table_to_copy"])
-    # pg_loader.run()
-    # pg_loader.close(commit=True)
+    # Remplissage des tables de la base postgres
+    pg_loader.connect()
+    pg_loader.run()
+    pg_loader.close(commit=True)
 
     # Création des vues et export
     dbt_exec("run", profile, "anais", config["models_directory"], ".", logger)
     dbt_exec("test", profile, "anais", config["models_directory"], ".", logger)
-
-    # pg_loader.export_csv(config["input_to_download"], date=today)
-    # sftp.upload_file_to_sftp(config["input_to_download"], config["local_directory_output"], config["remote_directory_input"], date=today)
 
     # Upload les vues
     pg_loader.connect()
@@ -211,10 +207,6 @@ def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_
     csv_folder_input = config.get("local_directory_input", "input/")
     csv_folder_output = config.get("local_directory_output", "output/")
     db_path = db_config.get("path", "data/duckdb_database.duckdb")
-    print(sql_folder)
-    print(csv_folder_input)
-    print(csv_folder_output)
-    print(db_path)
 
     ddb_loader = DuckDBPipeline(
         db_config=db_config,
@@ -225,10 +217,6 @@ def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_
 
     # Remplissage des tables de la base postgres  
     ddb_loader.connect()
-
-    # # Si la base duckDB Staging existe
-    # if os.path.isfile(staging_db_config["path"]):
-    #     ddb_loader.copy_table(config["table_to_copy"])
 
     if os.listdir(config["local_directory_input"]) and os.listdir(config["create_table_directory"]):
         ddb_loader.run()
@@ -251,7 +239,6 @@ def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_
 
         # Upload les vues
         ddb_loader.connect()
-        # ddb_loader.export_csv(config["input_to_download"], date=today)
         ddb_loader.export_csv(config["files_to_upload"], date=today)
     else:
         logger.error(f"❌ Base {db_config["path"]} vide ")

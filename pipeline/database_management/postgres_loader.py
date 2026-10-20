@@ -60,7 +60,6 @@ class PostgreSQLLoader(DataBasePipeline):
         self.database = db_config["dbname"]
         self.schema = db_config["schema"]
         self.engine = self.init_engine()
-        # self.conn = self.engine.connect()
 
     def init_engine(self):
         """ Connexion à la base postgres. """
@@ -285,8 +284,6 @@ class PostgreSQLLoader(DataBasePipeline):
         """
         with self.engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
                 return pd.read_sql_table(table_name, conn, schema=self.schema)
-        # self.conn.execute(text(f"SET search_path TO {self.schema}"))
-        # return pd.read_sql_table(table_name, self.conn)
 
     def close(self, commit: bool = False):
         """Valide la transaction puis ferme la connexion à la base de données postgres."""
