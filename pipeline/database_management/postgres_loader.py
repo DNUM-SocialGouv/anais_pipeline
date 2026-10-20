@@ -283,8 +283,10 @@ class PostgreSQLLoader(DataBasePipeline):
         pd.DataFrame
             Dataframe de la table chargée.
         """
-        self.conn.execute(text(f"SET search_path TO {self.schema}"))
-        return pd.read_sql_table(table_name, self.conn)
+        with self.engine.connect() as conn:
+                return pd.read_sql_table(table_name, conn, schema=self.schema)
+        # self.conn.execute(text(f"SET search_path TO {self.schema}"))
+        # return pd.read_sql_table(table_name, self.conn)
 
     def close(self, commit: bool = False):
         """Valide la transaction puis ferme la connexion à la base de données postgres."""
