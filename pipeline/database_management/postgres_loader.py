@@ -283,7 +283,7 @@ class PostgreSQLLoader(DataBasePipeline):
         pd.DataFrame
             Dataframe de la table chargée.
         """
-        with self.engine.connect() as conn:
+        with self.engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
                 return pd.read_sql_table(table_name, conn, schema=self.schema)
         # self.conn.execute(text(f"SET search_path TO {self.schema}"))
         # return pd.read_sql_table(table_name, self.conn)
