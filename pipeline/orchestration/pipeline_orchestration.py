@@ -148,15 +148,20 @@ def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_
     csv_folder_input = config.get("local_directory_input", "input/")
     csv_folder_output = config.get("local_directory_output", "output/")
 
+    # Récupération des fichiers sur le sftp
+    sftp = SFTPSync()
+    sftp.download_all(config["files_to_download"])
+
+    # Connexion à la base postgres
     pg_loader = PostgreSQLLoader(
         db_config=db_config,
         sql_folder=sql_folder,
         csv_folder_input=csv_folder_input,
         csv_folder_output=csv_folder_output
         )
+    pg_loader.connect()
 
     # Remplissage des tables de la base postgres
-    pg_loader.connect()
     pg_loader.run()
     pg_loader.close(commit=True)
 
