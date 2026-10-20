@@ -108,7 +108,7 @@ class PostgreSQLLoader(DataBasePipeline):
 
         # Suppression de la table
         logging.info(f"🗑 Table '{table_name}' existante → suppression totale (DROP TABLE)")
-        conn.execute(text(f"DROP TABLE IF EXISTS {table_name} CASCADE"))
+        conn.execute(text(f'DROP TABLE IF EXISTS "{self.schema}"."{table_name}" CASCADE'))
 
     def create_table(self, conn, sql_query: str, query_params: dict):
         """
@@ -128,7 +128,7 @@ class PostgreSQLLoader(DataBasePipeline):
                 self.postgres_drop_table(conn, query_params)
             conn.execute(text(sql_query))
         except Exception as e:
-            self.logger.error(f"❌ Erreur lors de l'exécution : {e}")
+            logging.error(f"❌ Erreur lors de l'exécution : {e}")
             raise
 
     def get_postgres_schema(self, conn, table_name: str) -> pd.DataFrame:
@@ -256,6 +256,7 @@ class PostgreSQLLoader(DataBasePipeline):
             df.to_sql(
                 table_name,
                 conn,
+                schema=self.schema,
                 if_exists="append",
                 index=False,
                 method='multi',
@@ -285,7 +286,13 @@ class PostgreSQLLoader(DataBasePipeline):
         self.conn.execute(text(f"SET search_path TO {self.schema}"))
         return pd.read_sql_table(table_name, self.conn)
 
-    def close(self):
-        """Ferme la connexion à la base de données postgres."""
-        self.conn.close()
-        logging.info("Connexion à postgres fermée.")
+    def close(self, commit: bool = False):
+        """Valide la transaction puis ferme la connexion à la base de données postgres."""
+        try:
+            if commit:
+                self.conn.commit()
+            else:
+                self.conn.rollback()
+        finally:
+            self.conn.close()
+            logging.info("Connexion à postgres fermée.")

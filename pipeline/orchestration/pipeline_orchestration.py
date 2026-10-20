@@ -51,7 +51,7 @@ def anais_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
         )
     pg_loader.connect()
     pg_loader.run()
-    pg_loader.close()
+    pg_loader.close(commit=True)
 
     # Création des vues et export
     dbt_exec("run", profile, "anais", config["models_directory"], ".", logger, install_deps=False)
@@ -158,17 +158,12 @@ def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_
     # # Remplissage des tables de la base postgres
     pg_loader.connect()
     # pg_loader.copy_table(config["table_to_copy"])
-
     pg_loader.run()
-
-    pg_loader.close()
+    pg_loader.close(commit=True)
 
     # Création des vues et export
     dbt_exec("run", profile, "anais", config["models_directory"], ".", logger)
     dbt_exec("test", profile, "anais", config["models_directory"], ".", logger)
-
-    # Upload les tables qui servent à la création des vues
-    sftp = SFTPSync()
 
     # pg_loader.export_csv(config["input_to_download"], date=today)
     # sftp.upload_file_to_sftp(config["input_to_download"], config["local_directory_output"], config["remote_directory_input"], date=today)
@@ -177,7 +172,9 @@ def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_
     pg_loader.connect()
     pg_loader.export_csv(config["files_to_upload"], date=today)
     pg_loader.close()
-    
+
+    # Upload les tables qui servent à la création des vues
+    sftp = SFTPSync()
     sftp.upload_file_to_sftp(config["files_to_upload"], config["local_directory_output"], config["remote_directory_output"], date=today)
     
 
