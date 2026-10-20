@@ -156,10 +156,10 @@ def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_
         )
 
     # # Remplissage des tables de la base postgres
-    pg_loader.connect()
-    # pg_loader.copy_table(config["table_to_copy"])
-    pg_loader.run()
-    pg_loader.close(commit=True)
+    # pg_loader.connect()
+    # # pg_loader.copy_table(config["table_to_copy"])
+    # pg_loader.run()
+    # pg_loader.close(commit=True)
 
     # Création des vues et export
     dbt_exec("run", profile, "anais", config["models_directory"], ".", logger)
