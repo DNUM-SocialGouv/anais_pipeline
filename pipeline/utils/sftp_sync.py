@@ -17,7 +17,7 @@ from pipeline.utils.config import env_var, setup_config
 # Classe SFTPSync
 class SFTPSync:
     def __init__(self):
-        """ Connexion au SFTP pour la récupération et l'upload de fichier. """
+        """Connexion au SFTP pour la récupération et l'upload de fichier."""
         load_dotenv()
         self.host = os.getenv("SFTP_HOST")
         self.port = int(os.getenv("SFTP_PORT"))
@@ -33,7 +33,7 @@ class SFTPSync:
         logging.basicConfig(
             filename="logs/sftp_sync.log",
             level=logging.INFO,
-            format="%(asctime)s - %(levelname)s - %(message)s"
+            format="%(asctime)s - %(levelname)s - %(message)s",
         )
 
     def connect(self):
@@ -83,7 +83,9 @@ class SFTPSync:
         except IOError:
             return False
 
-    def get_latest_file(self, remote_dir: str, keyword: str) -> Optional[SFTPAttributes]:
+    def get_latest_file(
+        self, remote_dir: str, keyword: str
+    ) -> Optional[SFTPAttributes]:
         """
         Sur le SFTP, récupère le fichier le plus récent contenant la chaine de caractère définie.
 
@@ -102,16 +104,20 @@ class SFTPSync:
         try:
             files = self.sftp.listdir_attr(remote_dir)
             matching_files = [
-                f for f in files
+                f
+                for f in files
                 if keyword in f.filename and not f.filename.endswith((".gpg"))
             ]
-            if 'DIAMANT' in remote_dir:
+            if "DIAMANT" in remote_dir:
                 matching_files = [
-                    f for f in files
+                    f
+                    for f in files
                     if keyword in f.filename and not f.filename.endswith((".gpg"))
                 ]
             if not matching_files:
-                logging.warning(f"Aucun fichier correspondant à '{keyword}' dans {remote_dir}")
+                logging.warning(
+                    f"Aucun fichier correspondant à '{keyword}' dans {remote_dir}"
+                )
                 return None
             return max(matching_files, key=lambda f: f.st_mtime)
         except FileNotFoundError:
@@ -140,10 +146,7 @@ class SFTPSync:
             date_dirs = [
                 entry.filename
                 for entry in entries
-                if (
-                    S_ISDIR(entry.st_mode)
-                    and re.fullmatch(r"\d{8}", entry.filename)
-                )
+                if (S_ISDIR(entry.st_mode) and re.fullmatch(r"\d{8}", entry.filename))
             ]
 
             if not date_dirs:
@@ -155,16 +158,12 @@ class SFTPSync:
 
             resolved = remote_dir.replace("<last_date>", latest_dir)
 
-            logging.info(
-                f"Répertoire <last_date> résolu : {resolved}"
-            )
+            logging.info(f"Répertoire <last_date> résolu : {resolved}")
 
             return resolved
 
         except Exception as e:
-            logging.error(
-                f"Impossible de résoudre <last_date> dans {remote_dir} : {e}"
-            )
+            logging.error(f"Impossible de résoudre <last_date> dans {remote_dir} : {e}")
             raise
 
     def download_file(self, remote_dir: str, local_path: str):
@@ -199,26 +198,29 @@ class SFTPSync:
         """
         self.connect()
         files_to_download = [
-            (item["path"], item["keyword"], item["file"])
-            for item in files_list
+            (item["path"], item["keyword"], item["file"]) for item in files_list
         ]
 
         # Boucle parcourant chaque fichier à télécharger
         for remote_dir, keyword, local_filename in files_to_download:
             remote_dir = self.resolve_last_date_directory(remote_dir)
 
-            logging.info(f"Recherche du fichier contenant '{keyword}' dans {remote_dir}")
+            logging.info(
+                f"Recherche du fichier contenant '{keyword}' dans {remote_dir}"
+            )
             latest_file = self.get_latest_file(remote_dir, keyword)
 
             if latest_file:
                 remote_path = os.path.join(remote_dir, latest_file.filename)
                 mod_time = datetime.datetime.fromtimestamp(latest_file.st_mtime)
                 local_path = os.path.join(self.output_folder, local_filename)
-                logging.info(f"Dernière version : {latest_file.filename} (modifié le {mod_time})")
+                logging.info(
+                    f"Dernière version : {latest_file.filename} (modifié le {mod_time})"
+                )
 
                 # Gestion des fichiers au format excel (DIAMANT)
-                if '.xlsx' in latest_file.filename:
-                    local_xlsx_path = local_path.replace('.csv', '.xlsx')
+                if ".xlsx" in latest_file.filename:
+                    local_xlsx_path = local_path.replace(".csv", ".xlsx")
                     self.download_file(remote_path, local_xlsx_path)
                     TransformExcel(local_xlsx_path, local_path)
                 # Autres fichiers au format csv
@@ -226,7 +228,9 @@ class SFTPSync:
                     self.download_file(remote_path, local_path)
         self.close()
 
-    def upload_file_to_sftp(self, views_to_export: dict, output_dir: str, remote_dir: str, date: str):
+    def upload_file_to_sftp(
+        self, views_to_export: dict, output_dir: str, remote_dir: str, date: str
+    ):
         """
         Exporte les vues enregistrées en csv du répertoire local au répertoire distant.
 
@@ -249,7 +253,7 @@ class SFTPSync:
 
         for _, csv_name in views_to_export.items():
             # Récupère le nom du fichier csv
-            file_name = f'sa_{csv_name}_{date}.csv'
+            file_name = f"sa_{csv_name}_{date}.csv"
             local_path = os.path.join(output_dir, file_name)
             remote_path = os.path.join(remote_dir, file_name)
 
@@ -277,7 +281,7 @@ class SFTPSync:
 
 
 if __name__ == "__main__":
-    config_var = env_var() 
+    config_var = env_var()
     config_var = setup_config(config_var)
 
     sftp = SFTPSync()

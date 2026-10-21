@@ -9,12 +9,15 @@ import re
 # Modules
 from pipeline.utils.csv_management import export_to_csv
 
+
 # Classe DataBasePipeline qui gère les actions relatives à n'importe quelle database
 class DataBasePipeline:
-    def __init__(self,
-                sql_folder: str = "Staging/output_sql/",
-                csv_folder_input: str = "input/",
-                csv_folder_output: str = "output/"):
+    def __init__(
+        self,
+        sql_folder: str = "Staging/output_sql/",
+        csv_folder_input: str = "input/",
+        csv_folder_output: str = "output/",
+    ):
         """
         Classe qui réalise les actions communes pour n'importe quel database.
         Cette classe est héritée par une classe relative au type de base.
@@ -41,7 +44,7 @@ class DataBasePipeline:
         self.csv_folder_output = csv_folder_output
 
     def ensure_directories_exist(self):
-        """ Crée les dossiers nécessaires s'ils n'existent pas. """
+        """Crée les dossiers nécessaires s'ils n'existent pas."""
         for folder in [self.sql_folder, self.csv_folder_input, self.csv_folder_output]:
             os.makedirs(folder, exist_ok=True)
             logging.info(f"Dossier vérifié/créé : {folder}")
@@ -58,7 +61,7 @@ class DataBasePipeline:
         Returns
         -------
         str
-            Contenu du fichier SQL.        
+            Contenu du fichier SQL.
         """
         with open(sql_file, "r", encoding="utf-8") as f:
             return f.read()
@@ -79,7 +82,7 @@ class DataBasePipeline:
         """
         match = re.compile(
             r"CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?(?P<name>(\"[^\"]+\"|\w+))",
-            re.IGNORECASE
+            re.IGNORECASE,
         ).search(sql_file)
 
         if match:
@@ -93,7 +96,7 @@ class DataBasePipeline:
         conn,
         query_params: dict,
         print_table: bool = False,
-        show_row_count: bool = False
+        show_row_count: bool = False,
     ) -> bool:
         """
         Vérifie l'existence d'une table, son nombre de ligne (optionnel) et affiche son contenu (optionnel).
@@ -129,10 +132,14 @@ class DataBasePipeline:
             return table_exist
 
         except Exception as e:
-            logging.error(f"❌ Erreur lors de la vérification de la table '{query_params["table"]}' → {e}")
+            logging.error(
+                f"❌ Erreur lors de la vérification de la table '{query_params['table']}' → {e}"
+            )
             return False
 
-    def execute_sql_file(self, conn, sql_file: Path, create_table_func: Callable[[Any, str, dict], None]):
+    def execute_sql_file(
+        self, conn, sql_file: Path, create_table_func: Callable[[Any, str, dict], None]
+    ):
         """
         Exécute un fichier SQL Create Table.
 
@@ -149,7 +156,9 @@ class DataBasePipeline:
         table_name = self.find_table_name_in_sql(sql)
 
         if not table_name:
-            logging.info(f"❌ Nom de table introuvable dans le fichier SQL : '{sql_file.name}'")
+            logging.info(
+                f"❌ Nom de table introuvable dans le fichier SQL : '{sql_file.name}'"
+            )
             return
         else:
             query_params = {"schema": self.schema, "table": table_name}
@@ -159,7 +168,9 @@ class DataBasePipeline:
                     create_table_func(conn, sql, query_params)
                     logging.info(f"✅ Table créée avec succès : {sql_file.name}")
                 except Exception as e:
-                    logging.error(f"❌ Erreur lors de l'exécution du SQL {sql_file.name}: {e}")
+                    logging.error(
+                        f"❌ Erreur lors de l'exécution du SQL {sql_file.name}: {e}"
+                    )
 
     def export_csv(self, views_to_export: dict, date: str):
         """
@@ -174,7 +185,9 @@ class DataBasePipeline:
         """
         for table_name, csv_name in views_to_export.items():
             if table_name:
-                export_to_csv(table_name, csv_name, self.fetch_df, self.csv_folder_output, date)
+                export_to_csv(
+                    table_name, csv_name, self.fetch_df, self.csv_folder_output, date
+                )
             else:
                 logging.warning("⚠️ Aucune table spécifiée")
 
@@ -197,5 +210,4 @@ class DataBasePipeline:
 
         for csv_file in Path(self.csv_folder_input).glob("*.csv"):
             query_params = {"schema": self.schema, "table": csv_file.stem}
-            self.check_table(conn, query_params, print_table=False, show_row_count = True)
-
+            self.check_table(conn, query_params, print_table=False, show_row_count=True)

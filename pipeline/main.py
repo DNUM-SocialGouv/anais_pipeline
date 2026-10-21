@@ -3,10 +3,12 @@ from typing import Literal
 
 # === Modules ===
 from pipeline.utils.config import env_var, setup_config
-from pipeline.orchestration.pipeline_orchestration import (anais_staging_pipeline,
-                                             local_staging_pipeline,
-                                             anais_project_pipeline,
-                                             local_project_pipeline)
+from pipeline.orchestration.pipeline_orchestration import (
+    anais_staging_pipeline,
+    local_staging_pipeline,
+    anais_project_pipeline,
+    local_project_pipeline,
+)
 
 
 # === Fonction ===
@@ -47,9 +49,13 @@ def main(config_var: dict):
 
     elif profile in profile_choice and profile != "Staging":
         if env == "anais":
-            anais_project_pipeline(profile, config, db_config, staging_db_config, today, logger)
+            anais_project_pipeline(
+                profile, config, db_config, staging_db_config, today, logger
+            )
         if env == "local":
-            local_project_pipeline(profile, config, db_config, staging_db_config, today, logger)
+            local_project_pipeline(
+                profile, config, db_config, staging_db_config, today, logger
+            )
 
 
 # === Exécution ===

@@ -9,6 +9,7 @@ from pipeline.database_management.duckdb_pipeline import DuckDBPipeline
 from pipeline.database_management.postgres_loader import PostgreSQLLoader
 from pipeline.utils.dbt_tools import dbt_exec
 
+
 # === Fonctions ===
 def anais_staging_pipeline(profile: str, config: dict, db_config: dict, logger: Logger):
     """
@@ -47,14 +48,22 @@ def anais_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
         db_config=db_config,
         sql_folder=sql_folder,
         csv_folder_input=csv_folder_input,
-        csv_folder_output=csv_folder_output
-        )
+        csv_folder_output=csv_folder_output,
+    )
     pg_loader.connect()
     pg_loader.run()
     pg_loader.close(commit=True)
 
     # Création des vues et export
-    dbt_exec("run", profile, "anais", config["models_directory"], ".", logger, install_deps=False)
+    dbt_exec(
+        "run",
+        profile,
+        "anais",
+        config["models_directory"],
+        ".",
+        logger,
+        install_deps=False,
+    )
     dbt_exec("test", profile, "anais", config["models_directory"], ".", logger)
 
 
@@ -86,36 +95,52 @@ def local_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
         db_config=db_config,
         sql_folder=sql_folder,
         csv_folder_input=csv_folder_input,
-        csv_folder_output=csv_folder_output
-        )
+        csv_folder_output=csv_folder_output,
+    )
 
     # Remplissage des tables de la base DuckDB
     ddb_loader.connect()
     # Si la base duckDB Staging existe
-    if os.listdir(config["local_directory_input"]) and os.listdir(config["create_table_directory"]):
+    if os.listdir(config["local_directory_input"]) and os.listdir(
+        config["create_table_directory"]
+    ):
         ddb_loader.run()
-        
+
     else:
         logger.error(
-        "❌ Aucun moyen de remplir la base DuckDB n'a été trouvé.\n"
-        f"- Répertoires vides :\n"
-        f"    > .csv : {config['local_directory_input']}\n"
-        f"    > .sql : {config['create_table_directory']}"
-    )
+            "❌ Aucun moyen de remplir la base DuckDB n'a été trouvé.\n"
+            f"- Répertoires vides :\n"
+            f"    > .csv : {config['local_directory_input']}\n"
+            f"    > .sql : {config['create_table_directory']}"
+        )
     duckdb_empty = ddb_loader.is_duckdb_empty()
     ddb_loader.close()
 
     # Vérifie si la base DuckDB est vide ou non avant de lancer le run dbt
     if not duckdb_empty:
         # Création des vues et export
-        dbt_exec("run", profile, "local", config["models_directory"], ".", logger, install_deps=False)
+        dbt_exec(
+            "run",
+            profile,
+            "local",
+            config["models_directory"],
+            ".",
+            logger,
+            install_deps=False,
+        )
         dbt_exec("test", profile, "anais", config["models_directory"], ".", logger)
     else:
-        logger.error(f"❌ Base {db_config["path"]} vide ")
-    
+        logger.error(f"❌ Base {db_config['path']} vide ")
 
 
-def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_db_config: dict, today: str, logger: Logger):
+def anais_project_pipeline(
+    profile: str,
+    config: dict,
+    db_config: dict,
+    staging_db_config: dict,
+    today: str,
+    logger: Logger,
+):
     """
     Pipeline exécuter pour un projet (différent de Staging) sur anais.
     Etapes:
@@ -157,8 +182,8 @@ def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_
         db_config=db_config,
         sql_folder=sql_folder,
         csv_folder_input=csv_folder_input,
-        csv_folder_output=csv_folder_output
-        )
+        csv_folder_output=csv_folder_output,
+    )
     pg_loader.connect()
 
     # Remplissage des tables de la base postgres
@@ -176,11 +201,22 @@ def anais_project_pipeline(profile: str, config: dict, db_config: dict, staging_
 
     # Upload les tables qui servent à la création des vues
     sftp = SFTPSync()
-    sftp.upload_file_to_sftp(config["files_to_upload"], config["local_directory_output"], config["remote_directory_output"], date=today)
-    
+    sftp.upload_file_to_sftp(
+        config["files_to_upload"],
+        config["local_directory_output"],
+        config["remote_directory_output"],
+        date=today,
+    )
 
 
-def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_db_config: dict, today: str, logger: Logger):
+def local_project_pipeline(
+    profile: str,
+    config: dict,
+    db_config: dict,
+    staging_db_config: dict,
+    today: str,
+    logger: Logger,
+):
     """
     Pipeline exécuter pour un projet (différent de Staging) en local.
     Nécessite la présence des fichiers csv dans le répertoire d'input.
@@ -217,22 +253,24 @@ def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_
         db_config=db_config,
         sql_folder=sql_folder,
         csv_folder_input=csv_folder_input,
-        csv_folder_output=csv_folder_output
-        )
+        csv_folder_output=csv_folder_output,
+    )
 
-    # Remplissage des tables de la base postgres  
+    # Remplissage des tables de la base postgres
     ddb_loader.connect()
 
-    if os.listdir(config["local_directory_input"]) and os.listdir(config["create_table_directory"]):
+    if os.listdir(config["local_directory_input"]) and os.listdir(
+        config["create_table_directory"]
+    ):
         ddb_loader.run()
     else:
         logger.error(
-        "❌ Aucun moyen de remplir la base DuckDB n'a été trouvé.\n"
-        f"- Base DuckDB Staging introuvable à : {staging_db_config['path']}\n"
-        f"- OU répertoires vides :\n"
-        f"    > .csv : {config['local_directory_input']}\n"
-        f"    > .sql : {config['create_table_directory']}"
-    )
+            "❌ Aucun moyen de remplir la base DuckDB n'a été trouvé.\n"
+            f"- Base DuckDB Staging introuvable à : {staging_db_config['path']}\n"
+            f"- OU répertoires vides :\n"
+            f"    > .csv : {config['local_directory_input']}\n"
+            f"    > .sql : {config['create_table_directory']}"
+        )
     duckdb_empty = ddb_loader.is_duckdb_empty()
     ddb_loader.close()
 
@@ -246,5 +284,5 @@ def local_project_pipeline(profile: str, config: dict, db_config: dict, staging_
         ddb_loader.connect()
         ddb_loader.export_csv(config["files_to_upload"], date=today)
     else:
-        logger.error(f"❌ Base {db_config["path"]} vide ")
+        logger.error(f"❌ Base {db_config['path']} vide ")
     ddb_loader.close()
