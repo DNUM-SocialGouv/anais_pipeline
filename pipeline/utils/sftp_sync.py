@@ -12,7 +12,7 @@ from stat import S_ISDIR
 # Modules
 from pipeline.utils.csv_management import TransformExcel
 from pipeline.utils.config import env_var, setup_config
-from pipeline.utils.load_yaml import load_YAML
+from pipeline.utils.load_yml import load_YAML
 
 
 # Classe SFTPSync
