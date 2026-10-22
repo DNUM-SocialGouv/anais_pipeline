@@ -39,7 +39,7 @@ def load_YAML(file_name: str, config_file_dir: str = None) -> dict:
     try:
         with open(path, "r") as f:
             file = yaml.safe_load(f)
-            logging.info(f"Acces config file readed from {path}")
+            logging.info(f"Config chargée depuis {path}")
             return file
 
     except FileNotFoundError:
