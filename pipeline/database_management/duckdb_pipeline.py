@@ -57,6 +57,8 @@ class DuckDBPipeline(DataBasePipeline):
     def init_duckdb(self):
         """Vérifie si la base DuckDB existe, sinon la crée."""
         if not os.path.exists(self.db_path):
+            db_path = Path(self.db_path)
+            db_path.parent.mkdir(parents=True, exist_ok=True)
             logging.info("Création de la base DuckDB...")
             conn = duckdb.connect(self.db_path)
             conn.close()
