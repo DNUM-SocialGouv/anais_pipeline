@@ -9,9 +9,8 @@ from stat import S_ISDIR
 from dotenv import load_dotenv
 from paramiko import AutoAddPolicy, SFTPAttributes, SSHClient
 
-from pipeline.utils.config import env_var, setup_config
-
 # Modules
+from pipeline.utils.config import env_var, setup_config
 from pipeline.utils.csv_management import TransformExcel
 
 
