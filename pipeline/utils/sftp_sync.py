@@ -12,18 +12,19 @@ from stat import S_ISDIR
 # Modules
 from pipeline.utils.csv_management import TransformExcel
 from pipeline.utils.config import env_var, setup_config
+from pipeline.utils.load_yaml import load_YAML
 
 
 # Classe SFTPSync
 class SFTPSync:
-    def __init__(self):
+    def __init__(self, output_folder: str):
         """Connexion au SFTP pour la récupération et l'upload de fichier."""
         load_dotenv()
         self.host = os.getenv("SFTP_HOST")
         self.port = int(os.getenv("SFTP_PORT"))
         self.username = os.getenv("SFTP_USERNAME")
         self.password = os.getenv("SFTP_PASSWORD")
-        self.output_folder = os.getenv("SFTP_OUTPUT_FOLDER", "input/")
+        self.output_folder = output_folder  # from metadata.yml
         self.private_key = os.getenv("SFTP_PRIVATE_KEY")
         self.private_key_passphrase = os.getenv("SFTP_KEY_PASSPHRASE") or None
 
@@ -284,5 +285,5 @@ if __name__ == "__main__":
     config_var = env_var()
     config_var = setup_config(config_var)
 
-    sftp = SFTPSync()
+    sftp = SFTPSync(config_var["config"]["local_directory_output"])
     sftp.download_all(config_var["config"]["files_to_download"])
