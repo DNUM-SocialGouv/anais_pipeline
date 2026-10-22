@@ -249,7 +249,7 @@ class SFTPSync:
             self.close()
             return
 
-        for _, csv_name in views_to_export.items():
+        for csv_name in views_to_export.values():
             # Récupère le nom du fichier csv
             file_name = f"sa_{csv_name}_{date}.csv"
             local_path = os.path.join(output_dir, file_name)
