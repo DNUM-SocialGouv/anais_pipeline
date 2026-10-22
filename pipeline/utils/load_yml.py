@@ -1,10 +1,11 @@
 # --- Importation de fichier de configuration ou de correspondance
 # Importation des packages
-import os
-from pathlib import Path
-import yaml
 import logging
+import os
 import re
+from pathlib import Path
+
+import yaml
 
 
 # Fonction

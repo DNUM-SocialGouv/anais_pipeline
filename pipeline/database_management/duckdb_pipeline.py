@@ -1,13 +1,15 @@
 # Packages
-import duckdb
+import logging
 import os
 from pathlib import Path
-import logging
+
+import duckdb
 import pandas as pd
+
+from pipeline.database_management.database_pipeline import DataBasePipeline
 
 # Modules
 from pipeline.utils.csv_management import csv_pipeline
-from pipeline.database_management.database_pipeline import DataBasePipeline
 
 # === Configuration du logger ===
 # Configuration du logger DBT

@@ -1,18 +1,18 @@
 # Packages
-import os
-import logging
-from paramiko import SFTPAttributes, SSHClient, AutoAddPolicy
 import datetime
-from dotenv import load_dotenv
-from typing import Tuple, Optional, List, Dict
+import logging
+import os
 import posixpath
 import re
 from stat import S_ISDIR
 
+from dotenv import load_dotenv
+from paramiko import AutoAddPolicy, SFTPAttributes, SSHClient
+
+from pipeline.utils.config import env_var, setup_config
+
 # Modules
 from pipeline.utils.csv_management import TransformExcel
-from pipeline.utils.config import env_var, setup_config
-from pipeline.utils.load_yml import load_YAML
 
 
 # Classe SFTPSync
@@ -84,9 +84,7 @@ class SFTPSync:
         except IOError:
             return False
 
-    def get_latest_file(
-        self, remote_dir: str, keyword: str
-    ) -> Optional[SFTPAttributes]:
+    def get_latest_file(self, remote_dir: str, keyword: str) -> SFTPAttributes | None:
         """
         Sur le SFTP, récupère le fichier le plus récent contenant la chaine de caractère définie.
 
@@ -184,7 +182,7 @@ class SFTPSync:
         except Exception as e:
             logging.error(f"Échec du téléchargement {remote_dir} : {e}")
 
-    def download_all(self, files_list: List[Dict[str, str]]):
+    def download_all(self, files_list: list[dict[str, str]]):
         """
         Téléchargement de tous les fichiers indiqués dans files_list, depuis le SFTP.
         Les fichiers sont enregistrés sous format csv dans un fichier local.

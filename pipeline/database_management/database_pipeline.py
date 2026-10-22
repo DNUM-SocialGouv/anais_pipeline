@@ -1,10 +1,9 @@
 # Packages
-import duckdb
-import os
-from pathlib import Path
 import logging
-from typing import Callable, Any
+import os
 import re
+from pathlib import Path
+from typing import Any, Callable
 
 # Modules
 from pipeline.utils.csv_management import export_to_csv

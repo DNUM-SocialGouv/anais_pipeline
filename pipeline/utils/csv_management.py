@@ -1,13 +1,14 @@
 # Packages
-import pandas as pd
 import csv
-import os
 import logging
-from io import StringIO
+import os
 import re
 import unicodedata
 from collections.abc import Callable
+from io import StringIO
 from pathlib import Path
+
+import pandas as pd
 
 # === Configuration du logging ===
 logging.getLogger(__name__)
