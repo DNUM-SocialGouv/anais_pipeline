@@ -17,18 +17,18 @@ from pipeline.utils.load_yml import load_YAML
 
 # Classe SFTPSync
 class SFTPSync:
-    def __init__(self, output_folder: str):
+    def __init__(self, download_folder: str):
         """Connexion au SFTP pour la récupération et l'upload de fichier."""
         load_dotenv()
         self.host = os.getenv("SFTP_HOST")
         self.port = int(os.getenv("SFTP_PORT"))
         self.username = os.getenv("SFTP_USERNAME")
         self.password = os.getenv("SFTP_PASSWORD")
-        self.output_folder = output_folder  # from metadata.yml
+        self.download_folder = download_folder  # from metadata.yml
         self.private_key = os.getenv("SFTP_PRIVATE_KEY")
         self.private_key_passphrase = os.getenv("SFTP_KEY_PASSPHRASE") or None
 
-        os.makedirs(self.output_folder, exist_ok=True)
+        os.makedirs(self.download_folder, exist_ok=True)
         os.makedirs("logs", exist_ok=True)
 
         logging.basicConfig(
@@ -214,7 +214,7 @@ class SFTPSync:
             if latest_file:
                 remote_path = os.path.join(remote_dir, latest_file.filename)
                 mod_time = datetime.datetime.fromtimestamp(latest_file.st_mtime)
-                local_path = os.path.join(self.output_folder, local_filename)
+                local_path = os.path.join(self.download_folder, local_filename)
                 logging.info(
                     f"Dernière version : {latest_file.filename} (modifié le {mod_time})"
                 )
@@ -285,5 +285,5 @@ if __name__ == "__main__":
     config_var = env_var()
     config_var = setup_config(config_var)
 
-    sftp = SFTPSync(config_var["config"]["local_directory_output"])
+    sftp = SFTPSync(download_folder=config_var["config"]["local_directory_input"])
     sftp.download_all(config_var["config"]["files_to_download"])

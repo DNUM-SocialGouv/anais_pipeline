@@ -40,7 +40,7 @@ def anais_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
     print(csv_folder_output)
 
     # Récupération des fichiers sur le sftp
-    sftp = SFTPSync()
+    sftp = SFTPSync(download_folder=csv_folder_input)
     sftp.download_all(config["files_to_download"])
 
     # Remplissage des tables de la base postgres
@@ -174,7 +174,7 @@ def anais_project_pipeline(
     csv_folder_output = config.get("local_directory_output", "output/")
 
     # Récupération des fichiers sur le sftp
-    sftp = SFTPSync()
+    sftp = SFTPSync(download_folder=csv_folder_input)
     sftp.download_all(config["files_to_download"])
 
     # Connexion à la base postgres
@@ -200,7 +200,7 @@ def anais_project_pipeline(
     pg_loader.close()
 
     # Upload les tables qui servent à la création des vues
-    sftp = SFTPSync()
+    sftp = SFTPSync(download_folder=csv_folder_input)
     sftp.upload_file_to_sftp(
         config["files_to_upload"],
         config["local_directory_output"],
