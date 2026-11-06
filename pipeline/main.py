@@ -5,6 +5,7 @@ from pipeline.orchestration.pipeline_orchestration import (
     local_staging_pipeline,
 )
 from pipeline.utils.config import env_var, setup_config
+from pipeline.utils.logging_management import configure_logging
 
 
 # === Fonction ===

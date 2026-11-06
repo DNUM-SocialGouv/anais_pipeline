@@ -12,6 +12,7 @@ from paramiko import AutoAddPolicy, SFTPAttributes, SSHClient
 # Modules
 from pipeline.utils.config import env_var, setup_config
 from pipeline.utils.csv_management import TransformExcel
+from pipeline.utils.logging_management import configure_logging
 
 # === Logger du module ===
 logger = logging.getLogger(__name__)

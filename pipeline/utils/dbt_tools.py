@@ -7,6 +7,7 @@ from typing import Literal
 
 # === Modules ===
 from pipeline.utils.config import env_var, setup_config
+from pipeline.utils.logging_management import configure_logging
 
 # === Logger du module ===
 logger = logging.getLogger(__name__)
