@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 
 # === Modules ===
 from pipeline.utils.load_yml import load_metadata_YAML
-from pipeline.utils.logging_management import setup_logger
 
 # === Constantes ===
 load_dotenv()
@@ -66,7 +65,6 @@ def setup_config(
 ) -> dict:
     """
     Fonction de setup de variable nécessaire à la pipeline.
-        - logger : Fichier de log.
         - config : Metadata du profile (dans metadata.yml).
 
     Parameters
@@ -80,19 +78,16 @@ def setup_config(
     Returns
     -------
     dict
-        Dictionnaire contenant les clés env, profile, logger, config, associé à leurs valeurs respectives.
+        Dictionnaire contenant les clés env, profile, config, associé à leurs valeurs respectives.
     """
     env = config_var.get("env")
     profile = config_var.get("profile")
-
-    logger = setup_logger(env, f"logs/log_{env}.log")
 
     config = load_metadata_YAML(metadata_yml, profile, ".")
     db_config = load_metadata_YAML(profile_yml, profile, ".")["outputs"][env]
     staging_db_config = load_metadata_YAML(profile_yml, "Staging", ".")["outputs"][env]
     today = date.strftime(date.today(), "%Y_%m_%d")
 
-    config_var["logger"] = logger
     config_var["config"] = config
     config_var["db_config"] = db_config
     config_var["staging_db_config"] = staging_db_config

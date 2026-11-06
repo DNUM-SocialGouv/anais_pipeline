@@ -7,6 +7,8 @@ from pathlib import Path
 
 import yaml
 
+# === Logger du module ===
+logger = logging.getLogger(__name__)
 
 # Fonction
 def load_YAML(file_name: str, config_file_dir: str = None) -> dict:
@@ -40,17 +42,17 @@ def load_YAML(file_name: str, config_file_dir: str = None) -> dict:
     try:
         with open(path, "r") as f:
             file = yaml.safe_load(f)
-            logging.info(f"Config chargée depuis {path}")
+            logger.info(f"Config chargée depuis {path}")
             return file
 
     except FileNotFoundError:
-        logging.error(f"Fichier de configuration introuvable {path}")
+        logger.error(f"Fichier de configuration introuvable {path}")
         raise
     except yaml.YAMLError as e:
-        logging.error(f"Erreur de parsing YAML dans le fichier {file_name} : {e}")
+        logger.error(f"Erreur de parsing YAML dans le fichier {file_name} : {e}")
         raise
     except Exception as e:
-        logging.error(
+        logger.error(
             f"Erreur inattendue lors du chargement du fichier de configuration : {e}"
         )
         raise
@@ -93,10 +95,10 @@ def load_metadata_YAML(file_name: str, table: str, config_file_dir: str = None) 
 
         return metadata[table]
     except KeyError as e:
-        logging.error(e)
+        logger.error(e)
         raise
     except Exception as e:
-        logging.error(f"Erreur inattendue lors du chargement de la configuration : {e}")
+        logger.error(f"Erreur inattendue lors du chargement de la configuration : {e}")
         raise
 
 

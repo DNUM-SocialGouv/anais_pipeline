@@ -10,8 +10,8 @@ from pathlib import Path
 
 import pandas as pd
 
-# === Configuration du logging ===
-logging.getLogger(__name__)
+# === Logger du module ===
+logger = logging.getLogger(__name__)
 
 
 # === Classes ===
@@ -68,11 +68,11 @@ class TransformExcel:
 
             # Suppression du fichier Excel
             os.remove(self.local_xlsx_path)
-            logging.info(
+            logger.info(
                 f"Fichier remplacé par un csv : {self.local_xlsx_path} -> {self.local_csv_path}"
             )
         except Exception as e:
-            logging.warning(
+            logger.warning(
                 f"⚠️ Erreur lors de la suppression de {self.local_xlsx_path} : {e}"
             )
 
@@ -102,7 +102,7 @@ class ReadCsvWithDelimiter:
                 dialect = sniffer.sniff(sample, delimiters=";,¤")
                 return dialect.delimiter
         except Exception as e:
-            logging.warning(
+            logger.warning(
                 f"⚠️ Impossible de détecter le délimiteur pour {self.file_path} : {e} → ';' utilisé par défaut."
             )
             return ";"
@@ -132,16 +132,16 @@ class ReadCsvWithDelimiter:
                     quotechar='"',
                     encoding="utf-8-sig",
                 )
-                logging.info(
+                logger.info(
                     f"✅ Lecture réussie avec le délimiteur '{delimiter}' pour {os.path.basename(self.file_path)}"
                 )
                 return df
             except pd.errors.ParserError as e:
-                logging.warning(
+                logger.warning(
                     f"⚠️ Erreur de parsing avec '{delimiter}' pour {self.file_path} → {e}"
                 )
             except Exception as e:
-                logging.warning(f"⚠️ Autre erreur avec '{delimiter}' → {e}")
+                logger.warning(f"⚠️ Autre erreur avec '{delimiter}' → {e}")
 
         raise ValueError(
             f"❌ Impossible de lire le fichier CSV {self.file_path} avec les délimiteurs connus."
@@ -176,12 +176,12 @@ class ReadCsvWithDelimiter:
                 on_bad_lines="warn",
             )
 
-            logging.info(
+            logger.info(
                 f"✅ Lecture réussie avec délimiteur '¤' après détection binaire : {os.path.basename(self.file_path)}"
             )
             return df
         except Exception as e:
-            logging.error(
+            logger.error(
                 f"❌ Erreur lors de la lecture de {self.file_path} avec délimiteur '¤' → {e}"
             )
             raise
@@ -201,7 +201,7 @@ class ReadCsvWithDelimiter:
             else:
                 return self.read_csv_resilient()
         except Exception as e:
-            logging.error(f"❌ Lecture échouée pour {self.file_path.name} → {e}")
+            logger.error(f"❌ Lecture échouée pour {self.file_path.name} → {e}")
             return
 
 
@@ -251,7 +251,7 @@ class StandardizeColnames:
 
         if cols_to_drop:
             self.df.drop(columns=cols_to_drop, inplace=True)
-            logging.info(f"🗑️ Colonnes supprimées : {cols_to_drop}")
+            logger.info(f"🗑️ Colonnes supprimées : {cols_to_drop}")
 
     def standardize_column_names(self):
         """
@@ -276,7 +276,7 @@ class StandardizeColnames:
             col = self.shorten_column_names(col)
 
             if col != original:
-                logging.info(f"📝 Colonne renommée : '{original}' → '{col}'")
+                logger.info(f"📝 Colonne renommée : '{original}' → '{col}'")
 
             new_columns.append(col)
 
@@ -305,12 +305,12 @@ def check_missing_columns(
     extra_columns = set(csv_columns) - set(table_columns)
 
     if missing_columns:
-        logging.warning(f"Colonnes manquantes dans {csv_file_name} : {missing_columns}")
+        logger.warning(f"Colonnes manquantes dans {csv_file_name} : {missing_columns}")
         for col in missing_columns:
             df[col] = None
 
     if extra_columns:
-        logging.warning(f"Colonnes en trop dans {csv_file_name} : {extra_columns}")
+        logger.warning(f"Colonnes en trop dans {csv_file_name} : {extra_columns}")
         df = df[table_columns]
 
 
@@ -360,7 +360,7 @@ def convert_columns_type(
                 else:
                     df[col_name] = df[col_name].astype(type_mapping[col_type])
             except ValueError as e:
-                logging.warning(
+                logger.warning(
                     f"Erreur de conversion de {col_name} en {col_type}: {e}, valeurs laissées en str."
                 )
     return df
@@ -436,11 +436,11 @@ def export_to_csv(
     # Nom du fichier
     file_name = f"sa_{csv_name}_{date}.csv"
     output_path = os.path.join(output_folder, file_name)
-    logging.info(f"📤 Export de '{table_name}' → {output_path}")
+    logger.info(f"📤 Export de '{table_name}' → {output_path}")
 
     try:
         df = df_fetch_func(table_name)
         df.to_csv(output_path, index=False, sep=";", encoding="utf-8-sig")
-        logging.info(f"✅ Export réussi : {file_name}")
+        logger.info(f"✅ Export réussi : {file_name}")
     except Exception as e:
-        logging.error(f"❌ Erreur d'export pour '{table_name}' → {e}")
+        logger.error(f"❌ Erreur d'export pour '{table_name}' → {e}")

@@ -20,17 +20,18 @@ def main(config_var: dict):
             - liste des projets existants (profile_choice)
             - environnement (env)
             - profile (profile)
-            - fichier de log (logger)
             - information de gestion du projet (config)
             - identifiants de la Database (db_config)
             - identifiants de la Database Staging (staging_db_config)
     """
     # Initialisation des configurations
+    logger = configure_logging(config_var["env"], console=config_var["env"] == "local")
+    logger.info(f"Lancement de la pipeline - env={config_var['env']} - profile={config_var['profile']}")
+
     config_var = setup_config(config_var)
     profile_choice = config_var["profile_choice"]
     env = config_var["env"]
     profile = config_var["profile"]
-    logger = config_var["logger"]
     config = config_var["config"]
     db_config = config_var["db_config"]
     staging_db_config = config_var["staging_db_config"]
@@ -39,18 +40,18 @@ def main(config_var: dict):
     # Exécution des pipelines dépendamment des paramètres d'entrées
     if profile == "Staging":
         if env == "anais":
-            anais_staging_pipeline(profile, config, db_config, logger)
+            anais_staging_pipeline(profile, config, db_config)
         if env == "local":
-            local_staging_pipeline(profile, config, db_config, logger)
+            local_staging_pipeline(profile, config, db_config)
 
     elif profile in profile_choice and profile != "Staging":
         if env == "anais":
             anais_project_pipeline(
-                profile, config, db_config, staging_db_config, today, logger
+                profile, config, db_config, staging_db_config, today
             )
         if env == "local":
             local_project_pipeline(
-                profile, config, db_config, staging_db_config, today, logger
+                profile, config, db_config, staging_db_config, today
             )
 
 

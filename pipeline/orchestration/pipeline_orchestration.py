@@ -1,7 +1,7 @@
 # === Packages ===
 import os
 import os.path
-from logging import Logger
+import logging
 
 from pipeline.database_management.duckdb_pipeline import DuckDBPipeline
 from pipeline.database_management.postgres_loader import PostgreSQLLoader
@@ -10,9 +10,11 @@ from pipeline.utils.dbt_tools import dbt_exec
 # === Modules ===
 from pipeline.utils.sftp_sync import SFTPSync
 
+# === Logger du module ===
+logger = logging.getLogger(__name__)
 
 # === Fonctions ===
-def anais_staging_pipeline(profile: str, config: dict, db_config: dict, logger: Logger):
+def anais_staging_pipeline(profile: str, config: dict, db_config: dict):
     """
     Pipeline exécuter pour Staging sur anais.
     Etapes:
@@ -29,16 +31,10 @@ def anais_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
         Metadata du profile (dans metadata.yml).
     db_config : dict
         Paramètres de configuration de la base DuckDB (dans 'profiles.yml').
-    logger : Logger
-        Fichier de log.
     """
     # Initialisation de la config postgres
     sql_folder = config.get("create_table_directory", "output_sql/")
     csv_folder_input = config.get("local_directory_input", "input/")
-    csv_folder_output = config.get("local_directory_output", "output/")
-    print(sql_folder)
-    print(csv_folder_input)
-    print(csv_folder_output)
 
     # Récupération des fichiers sur le sftp
     sftp = SFTPSync(download_folder=csv_folder_input)
@@ -62,13 +58,12 @@ def anais_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
         "anais",
         config["models_directory"],
         ".",
-        logger,
         install_deps=False,
     )
-    dbt_exec("test", profile, "anais", config["models_directory"], ".", logger)
+    dbt_exec("test", profile, "anais", config["models_directory"], ".")
 
 
-def local_staging_pipeline(profile: str, config: dict, db_config: dict, logger: Logger):
+def local_staging_pipeline(profile: str, config: dict, db_config: dict):
     """
     Pipeline exécuter pour Staging en local.
     Etapes:
@@ -84,8 +79,6 @@ def local_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
         Metadata du profile (dans metadata.yml).
     db_config : dict
         Paramètres de configuration de la base DuckDB (dans 'profiles.yml').
-    logger : Logger
-        Fichier de log.
     """
     # Initialisation de la config DuckDB
     sql_folder = config.get("create_table_directory", "output_sql/")
@@ -126,10 +119,9 @@ def local_staging_pipeline(profile: str, config: dict, db_config: dict, logger: 
             "local",
             config["models_directory"],
             ".",
-            logger,
             install_deps=False,
         )
-        dbt_exec("test", profile, "anais", config["models_directory"], ".", logger)
+        dbt_exec("test", profile, "anais", config["models_directory"], ".")
     else:
         logger.error(f"❌ Base {db_config['path']} vide ")
 
@@ -139,8 +131,7 @@ def anais_project_pipeline(
     config: dict,
     db_config: dict,
     staging_db_config: dict,
-    today: str,
-    logger: Logger,
+    today: str
 ):
     """
     Pipeline exécuter pour un projet (différent de Staging) sur anais.
@@ -165,8 +156,6 @@ def anais_project_pipeline(
         Paramètres de configuration de la base DuckDB Staging (dans 'profiles.yml').
     today : str
         Date du jour (format YYYY_MM_DD), utilisée dans le nommage des fichiers exportés.
-    logger : Logger
-        Fichier de log.
     """
     # --- Projet ---
     # Initialisation de la config postgres
@@ -192,8 +181,8 @@ def anais_project_pipeline(
     pg_loader.close(commit=True)
 
     # Création des vues et export
-    dbt_exec("run", profile, "anais", config["models_directory"], ".", logger)
-    dbt_exec("test", profile, "anais", config["models_directory"], ".", logger)
+    dbt_exec("run", profile, "anais", config["models_directory"], ".")
+    dbt_exec("test", profile, "anais", config["models_directory"], ".")
 
     # Upload les vues
     pg_loader.connect()
@@ -215,8 +204,7 @@ def local_project_pipeline(
     config: dict,
     db_config: dict,
     staging_db_config: dict,
-    today: str,
-    logger: Logger,
+    today: str
 ):
     """
     Pipeline exécuter pour un projet (différent de Staging) en local.
@@ -241,8 +229,6 @@ def local_project_pipeline(
         Paramètres de configuration de la base DuckDB Staging (dans 'profiles.yml').
     today : str
         Date du jour (format YYYY_MM_DD), utilisée dans le nommage des fichiers exportés.
-    logger : Logger
-        Fichier de log.
     """
     # Initialisation de la config DuckDB
     sql_folder = config.get("create_table_directory", "output_sql/")
@@ -278,8 +264,8 @@ def local_project_pipeline(
     # # Vérifie si la base DuckDB est vide ou non avant de lancer le run dbt
     if not duckdb_empty:
         # Création des vues et export
-        dbt_exec("run", profile, "local", config["models_directory"], ".", logger)
-        dbt_exec("test", profile, "local", config["models_directory"], ".", logger)
+        dbt_exec("run", profile, "local", config["models_directory"], ".")
+        dbt_exec("test", profile, "local", config["models_directory"], ".")
 
         # Upload les vues
         ddb_loader.connect()

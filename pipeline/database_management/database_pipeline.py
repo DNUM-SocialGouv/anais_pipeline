@@ -8,6 +8,8 @@ from typing import Any, Callable
 # Modules
 from pipeline.utils.csv_management import export_to_csv
 
+# === Logger du module ===
+logger = logging.getLogger(__name__)
 
 # Classe DataBasePipeline qui gère les actions relatives à n'importe quelle database
 class DataBasePipeline:
@@ -46,7 +48,7 @@ class DataBasePipeline:
         """Crée les dossiers nécessaires s'ils n'existent pas."""
         for folder in [self.sql_folder, self.csv_folder_input, self.csv_folder_output]:
             os.makedirs(folder, exist_ok=True)
-            logging.info(f"Dossier vérifié/créé : {folder}")
+            logger.info(f"Dossier vérifié/créé : {folder}")
 
     def read_sql_file(self, sql_file: Path) -> str:
         """
@@ -131,7 +133,7 @@ class DataBasePipeline:
             return table_exist
 
         except Exception as e:
-            logging.error(
+            logger.error(
                 f"❌ Erreur lors de la vérification de la table '{query_params['table']}' → {e}"
             )
             return False
@@ -155,7 +157,7 @@ class DataBasePipeline:
         table_name = self.find_table_name_in_sql(sql)
 
         if not table_name:
-            logging.info(
+            logger.info(
                 f"❌ Nom de table introuvable dans le fichier SQL : '{sql_file.name}'"
             )
             return
@@ -165,9 +167,9 @@ class DataBasePipeline:
             if not self.is_table_exist(conn, query_params):
                 try:
                     create_table_func(conn, sql, query_params)
-                    logging.info(f"✅ Table créée avec succès : {sql_file.name}")
+                    logger.info(f"✅ Table créée avec succès : {sql_file.name}")
                 except Exception as e:
-                    logging.error(
+                    logger.error(
                         f"❌ Erreur lors de l'exécution du SQL {sql_file.name}: {e}"
                     )
 
@@ -188,7 +190,7 @@ class DataBasePipeline:
                     table_name, csv_name, self.fetch_df, self.csv_folder_output, date
                 )
             else:
-                logging.warning("⚠️ Aucune table spécifiée")
+                logger.warning("⚠️ Aucune table spécifiée")
 
     def run(self):
         """
@@ -202,10 +204,10 @@ class DataBasePipeline:
         for sql_file in Path(self.sql_folder).glob("*.sql"):
             self.execute_sql_file(conn, sql_file, self.create_table)
 
-        logging.info(f"Début du chargement des fichiers CSV vers {self.typedb}.")
+        logger.info(f"Début du chargement des fichiers CSV vers {self.typedb}.")
         for csv_file in Path(self.csv_folder_input).glob("*.csv"):
             self.load_csv_file(conn, csv_file)
-        logging.info(f"Fin du chargement des fichiers CSV vers {self.typedb}.")
+        logger.info(f"Fin du chargement des fichiers CSV vers {self.typedb}.")
 
         for csv_file in Path(self.csv_folder_input).glob("*.csv"):
             query_params = {"schema": self.schema, "table": csv_file.stem}

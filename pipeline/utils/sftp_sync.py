@@ -13,6 +13,8 @@ from paramiko import AutoAddPolicy, SFTPAttributes, SSHClient
 from pipeline.utils.config import env_var, setup_config
 from pipeline.utils.csv_management import TransformExcel
 
+# === Logger du module ===
+logger = logging.getLogger(__name__)
 
 # Classe SFTPSync
 class SFTPSync:
@@ -28,13 +30,6 @@ class SFTPSync:
         self.private_key_passphrase = os.getenv("SFTP_KEY_PASSPHRASE") or None
 
         os.makedirs(self.download_folder, exist_ok=True)
-        os.makedirs("logs", exist_ok=True)
-
-        logging.basicConfig(
-            filename="logs/sftp_sync.log",
-            level=logging.INFO,
-            format="%(asctime)s - %(levelname)s - %(message)s",
-        )
 
     def connect(self):
         """Initialisation de la connexion SFTP."""
@@ -57,10 +52,10 @@ class SFTPSync:
 
             self.sftp = self.client.open_sftp()
 
-            logging.info("Connexion SFTP établie.")
+            logger.info("Connexion SFTP établie.")
 
         except Exception as e:
-            logging.error(f"Erreur de connexion SFTP : {e}")
+            logger.error(f"Erreur de connexion SFTP : {e}")
             raise
 
     def sftp_dir_exists(self, path: str) -> bool:
@@ -113,13 +108,13 @@ class SFTPSync:
                     if keyword in f.filename and not f.filename.endswith((".gpg"))
                 ]
             if not matching_files:
-                logging.warning(
+                logger.warning(
                     f"Aucun fichier correspondant à '{keyword}' dans {remote_dir}"
                 )
                 return None
             return max(matching_files, key=lambda f: f.st_mtime)
         except FileNotFoundError:
-            logging.warning(f"Dossier introuvable : {remote_dir}")
+            logger.warning(f"Dossier introuvable : {remote_dir}")
             return None
 
     def resolve_last_date_directory(self, remote_dir: str) -> str:
@@ -156,12 +151,12 @@ class SFTPSync:
 
             resolved = remote_dir.replace("<last_date>", latest_dir)
 
-            logging.info(f"Répertoire <last_date> résolu : {resolved}")
+            logger.info(f"Répertoire <last_date> résolu : {resolved}")
 
             return resolved
 
         except Exception as e:
-            logging.error(f"Impossible de résoudre <last_date> dans {remote_dir} : {e}")
+            logger.error(f"Impossible de résoudre <last_date> dans {remote_dir} : {e}")
             raise
 
     def download_file(self, remote_dir: str, local_path: str):
@@ -177,9 +172,9 @@ class SFTPSync:
         """
         try:
             self.sftp.get(remote_dir, local_path)
-            logging.info(f"Téléchargé : {remote_dir} → {local_path}")
+            logger.info(f"Téléchargé : {remote_dir} → {local_path}")
         except Exception as e:
-            logging.error(f"Échec du téléchargement {remote_dir} : {e}")
+            logger.error(f"Échec du téléchargement {remote_dir} : {e}")
 
     def download_all(self, files_list: list[dict[str, str]]):
         """
@@ -203,7 +198,7 @@ class SFTPSync:
         for remote_dir, keyword, local_filename in files_to_download:
             remote_dir = self.resolve_last_date_directory(remote_dir)
 
-            logging.info(
+            logger.info(
                 f"Recherche du fichier contenant '{keyword}' dans {remote_dir}"
             )
             latest_file = self.get_latest_file(remote_dir, keyword)
@@ -212,7 +207,7 @@ class SFTPSync:
                 remote_path = os.path.join(remote_dir, latest_file.filename)
                 mod_time = datetime.datetime.fromtimestamp(latest_file.st_mtime)
                 local_path = os.path.join(self.download_folder, local_filename)
-                logging.info(
+                logger.info(
                     f"Dernière version : {latest_file.filename} (modifié le {mod_time})"
                 )
 
@@ -245,7 +240,7 @@ class SFTPSync:
         """
         self.connect()
         if not self.sftp_dir_exists(remote_dir):
-            logging.error(f"❌ Répertoire SFTP inexistant : {remote_dir}")
+            logger.error(f"❌ Répertoire SFTP inexistant : {remote_dir}")
             self.close()
             return
 
@@ -259,11 +254,11 @@ class SFTPSync:
             if os.path.exists(local_path):
                 try:
                     self.sftp.put(local_path, remote_path)
-                    logging.info(f"✅ Upload réussi: {file_name} → {remote_path}")
+                    logger.info(f"✅ Upload réussi: {file_name} → {remote_path}")
                 except Exception as e:
-                    logging.error(f"❌ Échec de l'upload {file_name} → {e}")
+                    logger.error(f"❌ Échec de l'upload {file_name} → {e}")
             else:
-                logging.warning(f"⚠️ Fichier introuvable : {local_path}")
+                logger.warning(f"⚠️ Fichier introuvable : {local_path}")
         self.close()
 
     def close(self):
@@ -275,10 +270,11 @@ class SFTPSync:
         if hasattr(self, "client"):
             self.client.close()
 
-        logging.info("Connexion SFTP fermée.")
+        logger.info("Connexion SFTP fermée.")
 
 
 if __name__ == "__main__":
+    logger = configure_logging("sftp")
     config_var = env_var()
     config_var = setup_config(config_var)
 

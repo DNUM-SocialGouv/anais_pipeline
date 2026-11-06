@@ -1,12 +1,15 @@
 # === Packages ===
 import os
 import subprocess
-from logging import Logger
+import logging
 from pathlib import Path
 from typing import Literal
 
 # === Modules ===
 from pipeline.utils.config import env_var, setup_config
+
+# === Logger du module ===
+logger = logging.getLogger(__name__)
 
 
 # === Fonctions ===
@@ -20,7 +23,6 @@ def dbt_exec(
     target: Literal["local", "anais"],
     project_dir: str,
     profiles_dir: str,
-    logger: Logger,
     install_deps: bool = True,
 ):
     """
@@ -39,8 +41,6 @@ def dbt_exec(
         Répertoire du projet dbt à exécuter (contenant le 'dbt_project.yml')
     profiles_dir : str
         Répertoire du projet dbt (contenant le 'profiles.yml').
-    logger : Logger
-        Fichier de log.
     """
     try:
         project_path = str(Path(project_dir).resolve())
@@ -80,6 +80,7 @@ def dbt_exec(
 
 
 if __name__ == "__main__":
+    logger = configure_logging("dbt")
     config_var = env_var()
     config_var = setup_config(config_var)
 
@@ -89,7 +90,6 @@ if __name__ == "__main__":
         config_var["env"],
         config_var["config"]["models_directory"],
         ".",
-        config_var["logger"],
     )
     dbt_exec(
         "test",
@@ -97,5 +97,4 @@ if __name__ == "__main__":
         config_var["env"],
         config_var["config"]["models_directory"],
         ".",
-        config_var["logger"],
     )
