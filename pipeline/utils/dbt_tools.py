@@ -1,4 +1,7 @@
 # === Packages ===
+import re
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 import os
 import subprocess
 import logging
@@ -9,11 +12,52 @@ from typing import Literal
 from pipeline.utils.config import env_var, setup_config
 from pipeline.utils.logging_management import configure_logging
 
+# === Constantes ===
+LOCAL_TZ = ZoneInfo("Europe/Paris")
+# Horodatage dbt en début de ligne : "14:02:31  Running with dbt=1.9.2"
+DBT_TIME_PATTERN = re.compile(r"^(\d{2}):(\d{2}):(\d{2})(?=\s)", re.MULTILINE)
+
 # === Logger du module ===
 logger = logging.getLogger(__name__)
 
 
 # === Fonctions ===
+def dbt_output_to_local_time(
+    output: str, start_utc: datetime, tz: ZoneInfo = LOCAL_TZ
+) -> str:
+    """
+    Convertit les horodatages UTC écrits par dbt en début de ligne vers l'heure locale.
+    Les lignes sans horodatage (détails d'erreur, tableaux...) restent inchangées.
+
+    Parameters
+    ----------
+    output : str
+        Sortie brute de dbt (stdout ou stderr).
+    start_utc : datetime
+        Heure UTC du lancement de la commande dbt, sans microsecondes.
+        Sert à dater les lignes et à gérer un passage de minuit pendant l'exécution.
+    tz : ZoneInfo, optional
+        Fuseau horaire cible, by default Europe/Paris.
+
+    Returns
+    -------
+    str
+        Sortie dbt avec les heures converties.
+    """
+    if not output:
+        return ""
+
+    def _convert(match: re.Match) -> str:
+        hour, minute, second = map(int, match.groups())
+        line_utc = start_utc.replace(hour=hour, minute=minute, second=second)
+        # Heure inférieure au lancement : on est passé au jour suivant
+        if line_utc < start_utc:
+            line_utc += timedelta(days=1)
+        return line_utc.astimezone(tz).strftime("%H:%M:%S")
+
+    return DBT_TIME_PATTERN.sub(_convert, output)
+
+
 def dbt_deps(project_path: str):
     return subprocess.run(["dbt", "deps", "--project-dir", project_path])
 
@@ -52,6 +96,7 @@ def dbt_exec(
             and install_deps
         ):
             dbt_deps_install = dbt_deps(project_path)
+        start_utc = datetime.now(timezone.utc).replace(microsecond=0)
 
         result = subprocess.run(
             [
@@ -73,11 +118,12 @@ def dbt_exec(
             check=True,
         )
         logger.info(f"✅ Dbt {type_exec} de {project_dir} terminé avec succès")
-        logger.info(result.stdout)
+        logger.info(dbt_output_to_local_time(result.stdout, start_utc))
 
     except subprocess.CalledProcessError as e:
         logger.error(f"❌ Erreur lors du dbt {type_exec} :")
-        logger.error(e.stdout)
+        logger.error(dbt_output_to_local_time(e.stdout, start_utc))
+        logger.error(dbt_output_to_local_time(e.stderr, start_utc))
 
 
 if __name__ == "__main__":
